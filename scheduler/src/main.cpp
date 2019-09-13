@@ -485,7 +485,7 @@ int main(int argc, char* argv[])
     }
 
     const int num_episodes = 1; // Predictor should run a single episode
-    if(!spawn_agent("python3 ./predictor.py"))
+    if(!spawn_predictor("python3 ./predictor.py"))
     {
         fprintf(stderr,"Spawn predictor\n");
         cleanup();
