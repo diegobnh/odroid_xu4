@@ -25,6 +25,7 @@ static int scheduler_input_pipe = -1;
 static int scheduler_output_pipe = -1;
 static int scheduler_pid = -1;
 static int application_pid = -1;
+static int save_application_pid = -1;
 static uint64_t application_start_time = 0;
 static State current_state;
 static int num_time_steps = 0;
@@ -210,7 +211,7 @@ static bool create_logging_file()
 {
     char filename[PATH_MAX];
 
-    sprintf(filename, "scheduler_%d.csv", application_pid); //getpid() get fathers'pid  
+    sprintf(filename, "scheduler_%d.csv", save_application_pid); //getpid() get fathers'pid  
 
     collect_stream = fopen(filename, "w");
     if(!collect_stream)
@@ -422,15 +423,15 @@ static void update_scheduler()
         perf_shutdown();
         if(next_state == STATE_4l)
         {
-            perf_init_little()
+            perf_init_little();
         }
         else if (next_state == STATE_4b)
         {
-            perf_init_big()
+            perf_init_big();
         }
-        else if (next_state == STATE_4b4l)
+        else if (next_state == STATE_4l4b)
         {
-            perf_init_biglittle()
+            perf_init_biglittle();
         }
 
 
