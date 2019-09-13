@@ -356,33 +356,47 @@ static void update_scheduler()
     double b_pmc_6 = 0;
     double b_pmc_7 = 0;
 
-  
-    //l_pmc or b_pmc are sum all core in cluster
-    for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
+    if(current_state==STATE_4l)
     {
-        const auto hw_data = perf_consume_hw(cpu);
-        l_pmc_1 += (double)hw_data.pmc_1;   
-        l_pmc_2 += (double)hw_data.pmc_2;   
-        l_pmc_3 += (double)hw_data.pmc_3;   
-        l_pmc_4 += (double)hw_data.pmc_4;   
-        l_pmc_5 += (double)hw_data.pmc_5;   
-
+        //l_pmc or b_pmc are sum all core in cluster
+        for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
+        {
+            const auto hw_data = perf_consume_hw(cpu);
+            l_pmc_1 += (double)hw_data.pmc_1;   
+            l_pmc_2 += (double)hw_data.pmc_2;   
+            l_pmc_3 += (double)hw_data.pmc_3;   
+            l_pmc_4 += (double)hw_data.pmc_4;   
+            l_pmc_5 += (double)hw_data.pmc_5;   
+        }
+    }
+    
+    if(current_state==STATE_4b)
+    {
+        for(int cpu = START_INDEX_BIG; cpu < END_INDEX_BIG; ++cpu)
+        {
+            const auto hw_data = perf_consume_hw(cpu);
+            b_pmc_1 += (double)hw_data.pmc_1;   
+            b_pmc_2 += (double)hw_data.pmc_2;   
+            b_pmc_3 += (double)hw_data.pmc_3;   
+            b_pmc_4 += (double)hw_data.pmc_4;   
+            b_pmc_5 += (double)hw_data.pmc_5;   
+            b_pmc_6 += (double)hw_data.pmc_6;   
+            b_pmc_7 += (double)hw_data.pmc_7;   
+        }
     }
 
-    for(int cpu = START_INDEX_BIG; cpu < END_INDEX_BIG; ++cpu)
+    if(current_state==STATE_4l4b  && (l_pmu_1 < 0.000001 || b_pmu_1 < 0.000001))
     {
-        const auto hw_data = perf_consume_hw(cpu);
-        b_pmc_1 += (double)hw_data.pmc_1;   
-        b_pmc_2 += (double)hw_data.pmc_2;   
-        b_pmc_3 += (double)hw_data.pmc_3;   
-        b_pmc_4 += (double)hw_data.pmc_4;   
-        b_pmc_5 += (double)hw_data.pmc_5;   
-        b_pmc_6 += (double)hw_data.pmc_6;   
-        b_pmc_7 += (double)hw_data.pmc_7;   
-
+        return;
     }
-
-
+    else if(current_state==STATE_4l && l_pmu_1 < 0.000001){
+        return;
+    }
+    else if(current_state==STATE_4b && b_pmu_1 < 0.000001){
+        return;
+    }
+    
+    
     double total_cpu_migration = 0;
     double total_context_switch = 0;
 
@@ -407,7 +421,6 @@ static void update_scheduler()
                       current_state, exec_time);
 
     recv_from_scheduler("%d", &state_index_reply);//Here is State enumerate
-    ::num_time_steps += 1;
     next_state = static_cast<State>(state_index_reply);
 
 
@@ -447,7 +460,7 @@ static void update_scheduler()
 
         current_state = next_state;
     }
-
+     ::num_change_config += 1;
 }
 
 
@@ -462,13 +475,8 @@ void sig_handler(int signo)
     }
 }
 
-
 int main(int argc, char* argv[])
 {
-
-    ::flag_update_schedule = FLAG_ONLY_PARALLEL_REGION ;
-    signal(SIGUSR1, sig_handler);
-    signal(SIGUSR2, sig_handler);
 
     if(argc < 2)
     {
@@ -477,13 +485,15 @@ int main(int argc, char* argv[])
     }
 
     const int num_episodes = 1; // Predictor should run a single episode
-    if(!spawn_predictor("python3 ./predictor.py"))
+    if(!spawn_agent("python3 ./predictor.py"))
     {
+        fprintf(stderr,"Spawn predictor\n");
         cleanup();
         return 1;
     }
-    usleep(5000000);//time to load model
-    
+
+    usleep(5000000);
+ 
     if(!spawn_application(&argv[1]))
     {
         fprintf(stderr,"Spawn application\n");
@@ -491,7 +501,7 @@ int main(int argc, char* argv[])
         return 1;
     }
     ::save_application_pid = ::application_pid;
-   
+
     for(int curr_episode = 0; curr_episode < num_episodes; ++curr_episode)
     {
         perf_init_big();
@@ -501,12 +511,15 @@ int main(int argc, char* argv[])
         while(::application_pid != -1)
         {
             int pid = waitpid(::application_pid, NULL, WNOHANG);
-
             if(pid == -1)
             {
                 perror("scheduler: waitpid in main loop failed");
             }
-            else if(pid != 0)
+            else if(pid == 0)
+            {
+                update_scheduler();
+            }
+            else
             {
                 assert(pid == ::application_pid);
                 application_pid = -1;
@@ -519,15 +532,8 @@ int main(int argc, char* argv[])
                 {
                      exec_time = to_millis(get_time() - ::application_start_time);
                      fprintf(stderr,"Exec_Time:%lf seconds\n", exec_time*0.001);
-                     //send_to_scheduler("%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%d",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1);
-
-                     //create_time_file(exec_time);
-                     //recv_from_scheduler("%d", &state_index_reply);
+                     create_time_file(exec_time);
                 }
-            }
-            else
-            {
-                update_scheduler();
             }
 
             usleep(200000);//20 miliseconds
