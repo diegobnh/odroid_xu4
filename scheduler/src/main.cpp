@@ -305,7 +305,7 @@ static bool spawn_application(char* argv[])
         ::application_pid = pid;
         ::application_start_time = get_time();
         ::current_state = STATE_4b;
-        //update_scheduler_to_serial_region();
+        update_scheduler_to_serial_region();
         return true;
     }
 }
@@ -313,7 +313,6 @@ static bool spawn_application(char* argv[])
 
 static void update_scheduler_to_serial_region()
 {
-//    if(::application_pid != -1 && current_state != STATE_4b)
     if(::application_pid != -1)
     {
         char buffer[512];
@@ -460,7 +459,6 @@ static void update_scheduler()
 
         current_state = next_state;
     }
-     ::num_change_config += 1;
 }
 
 
