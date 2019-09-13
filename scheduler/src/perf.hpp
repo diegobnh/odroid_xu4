@@ -18,13 +18,13 @@ struct PerfSoftwareData
 struct PerfHardwareData
 {
     static const uint64_t no_value = -1;
-    uint64_t pmu_1 = -1;
-    uint64_t pmu_2 = -1;
-    uint64_t pmu_3 = -1;
-    uint64_t pmu_4 = -1;
-    uint64_t pmu_5 = -1;
-    uint64_t pmu_6 = -1;
-    uint64_t pmu_7 = -1;
+    uint64_t pmc_1 = -1;
+    uint64_t pmc_2 = -1;
+    uint64_t pmc_3 = -1;
+    uint64_t pmc_4 = -1;
+    uint64_t pmc_5 = -1;
+    uint64_t pmc_6 = -1;
+    uint64_t pmc_7 = -1;
 };
 
 /// Initialises the performance counting subsystem.
