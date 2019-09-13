@@ -1,16 +1,11 @@
 #pragma once
 #include <cstdint>
 
-//These number are specific to odroid_xu4
+
 #define START_INDEX_LITTLE 0
 #define END_INDEX_LITTLE 3
 #define START_INDEX_BIG 4
 #define END_INDEX_BIG 7
-
-//only one at a time may be enabled
-#define PMCS_A15_ONLY
-//#define PMCS_A7_ONLY
-
 
 /// Software hardware counters.
 struct PerfSoftwareData
@@ -23,17 +18,19 @@ struct PerfSoftwareData
 struct PerfHardwareData
 {
     static const uint64_t no_value = -1;
-    uint64_t pmc_1 = -1;
-    uint64_t pmc_2 = -1;
-    uint64_t pmc_3 = -1;
-    uint64_t pmc_4 = -1;
-    uint64_t pmc_5 = -1;
-    uint64_t pmc_6 = -1;
-    uint64_t pmc_7 = -1;
+    uint64_t pmu_1 = -1;
+    uint64_t pmu_2 = -1;
+    uint64_t pmu_3 = -1;
+    uint64_t pmu_4 = -1;
+    uint64_t pmu_5 = -1;
+    uint64_t pmu_6 = -1;
+    uint64_t pmu_7 = -1;
 };
 
 /// Initialises the performance counting subsystem.
-extern void perf_init();
+extern void perf_init_little();
+extern void perf_init_big();
+extern void perf_init_biglittle();
 
 /// Shutdowns the performance counting subsystem.
 extern void perf_shutdown();

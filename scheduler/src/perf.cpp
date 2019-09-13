@@ -11,30 +11,6 @@
 #include <linux/perf_event.h>
 
 
-//sure you have exactly 10 lines and 6 columns per line because the variable "curr_index_pmc_a15" assumed it configuration.
-int64_t pmcs_a15[]={0x01,0x02,0x03,0x04,0x05,0x08,
-                    0x09,0x10,0x12,0x13,0x14,0x15,
-                    0x16,0x17,0x18,0x19,0x1B,0x1D,
-                    0x40,0x41,0x42,0x43,0x46,0x47,
-                    0x48,0x4C,0x4D,0x50,0x51,0x52,
-                    0x53,0x56,0x58,0x60,0x61,0x62,
-		    0x64,0x66,0x67,0x68,0x69,0x6A,
-                    0x6C,0x6D,0x6E,0x70,0x71,0x72,
-                    0x73,0x74,0x75,0x76,0x78,0x79,
-                    0x7A,0x7E,0x00,0x00,0x00,0x00}; //10x6
-
-
-//sure you have exactly 9 lines and 4 columns per line because variable "curr_index_pmc_a7" assumed it configuration.
-int64_t pmcs_a7[]={0x01,0x02,0x03,0x04,
-		   0x05,0x06,0x07,0x08,
-		   0x09,0x0A,0x0C,0x0D,
-                   0x0E,0x0F,0x10,0x12,
-                   0x13,0x14,0x15,0x16,
-                   0x17,0x18,0x19,0x1D,
-                   0x60,0x61,0xC0,0xC1,
-                   0xC4,0xC5,0xC6,0xC9,
-                   0xCA,0x00,0x00,0x00}; //9X4
-
 /// Maximum events that can be recorded simultaneously.
 ///
 /// The Cortex A7 is a limiting factor here because it contains
@@ -59,11 +35,8 @@ static PerfEvent perf_sw[MAX_PROCESSORS][NUM_SOFTWARE_COUNTERS];
 static int num_processors;
 
 
-void perf_init()
+void perf_init_little()
 {
-
-    static int curr_index_pmc_a15 = 0;
-    static int curr_index_pmc_a7 = 0;
 
     auto perf_event_open = [](struct perf_event_attr *hw_event, pid_t pid,
                                int cpu, int group_fd, unsigned long flags) {
@@ -76,7 +49,6 @@ void perf_init()
 
     //fprintf(stderr, "scheduler: detected %d processors\n", num_processors);
 
-#ifdef PMCS_A7_ONLY
     for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
     {
         for(int i = 0; i < MAX_EVENTS_PER_GROUP; ++i)
@@ -85,75 +57,6 @@ void perf_init()
             int group_fd;
             struct perf_event_attr pe;
             memset(&pe, 0, sizeof(pe));
-
-
-            switch(i)
-            {
-                case 0:
-                    config = PERF_COUNT_HW_CPU_CYCLES; //0x11
-                    group_fd = -1;
-                    pe.type = PERF_TYPE_HARDWARE;
-                    break;
-                case 1:
-                    config = pmcs_a7[curr_index_pmc_a7];
-                    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-                    break;
-                case 2:
-                    config = pmcs_a7[curr_index_pmc_a7+1];
-                    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-                    break;
-                case 3:
-                    config = pmcs_a7[curr_index_pmc_a7+2];
-                    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-                    break;
-                case 4:
-                    config = pmcs_a7[curr_index_pmc_a7+3];
-                    group_fd = perf_cpu[cpu][0].fd;
-		    pe.type = PERF_TYPE_RAW;
-                    break;
-                default:
-                    perf_cpu[cpu][i].fd = -1;
-                    perf_cpu[cpu][i].id = -1;
-		    pe.type = PERF_TYPE_RAW;
-                    continue;
-            }
-
-            pe.size = sizeof(pe);
-            //pe.type = PERF_TYPE_RAW;
-            pe.config = config;
-            pe.exclude_hv = true;
-            pe.exclude_kernel = true;
-            pe.disabled = true;
-            pe.read_format = PERF_FORMAT_ID | PERF_FORMAT_GROUP;
-
-            const auto fd = perf_event_open(&pe, -1, cpu, group_fd, 0);
-            if(fd == -1)
-            {
-                perror("scheduler: failed to initialise perf");
-                abort();
-            }
-
-            perf_cpu[cpu][i].fd = fd;
-            ioctl(fd, PERF_EVENT_IOC_ID, &perf_cpu[cpu][i].id);
-            ioctl(fd, PERF_EVENT_IOC_RESET, 0);
-            perf_cpu[cpu][i].prev_value = 0;
-        }
-    }
-    curr_index_pmc_a7 +=4;
-
-#else
-    for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
-    {
-        for(int i = 0; i < MAX_EVENTS_PER_GROUP; ++i)
-        {
-            uint64_t config;
-            int group_fd;
-            struct perf_event_attr pe;
-            memset(&pe, 0, sizeof(pe));
-
 
             switch(i)
             {
@@ -211,87 +114,83 @@ void perf_init()
         }
     }
 
-#endif
+    
 
-#ifdef PMCS_A15_ONLY
-    for(int cpu = START_INDEX_BIG; cpu <= END_INDEX_BIG; ++cpu)
+    for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
     {
-        for(int i = 0; i < MAX_EVENTS_PER_GROUP; ++i)
+
+        for(int i = 0; i < NUM_SOFTWARE_COUNTERS; ++i)
         {
-            uint64_t config;
-            int group_fd;
-            struct perf_event_attr pe;
-            memset(&pe, 0, sizeof(pe));
+                uint64_t config;
+                int group_fd;
 
+                switch(i)
+                {
+                        case 0:
+	                    config = PERF_COUNT_SW_CPU_MIGRATIONS;
+	                    group_fd = -1;
+                            //group_fd = perf_sw[cpu][0].fd;
+	                    break;
+                        case 1:
+	                    config = PERF_COUNT_SW_CONTEXT_SWITCHES;
+	                    group_fd = perf_sw[cpu][0].fd;
+	                    break;
+                        default:
+	                    perf_sw[cpu][i].fd = -1;
+	                    perf_sw[cpu][i].id = -1;
+	                    continue;
+                }
 
-            switch(i)
-            {
-                case 0:
-		    config = PERF_COUNT_HW_CPU_CYCLES;
-		    group_fd = -1;
-                    pe.type = PERF_TYPE_HARDWARE;
-		    break;
-                case 1:
-		    config = pmcs_a15[curr_index_pmc_a15];
-		    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-		    break;
-                case 2:
-		    config = pmcs_a15[curr_index_pmc_a15+1];
-		    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-		    break;
-		case 3:
-                    config = pmcs_a15[curr_index_pmc_a15+2];
-		    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-		    break;
-		case 4:
-                    config = pmcs_a15[curr_index_pmc_a15+3];
-		    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-		    break;
-                case 5:
-                    config = pmcs_a15[curr_index_pmc_a15+4];
-		    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-                    break;
-                case 6:
-                    config = pmcs_a15[curr_index_pmc_a15+5];
-		    group_fd = perf_cpu[cpu][0].fd;
-                    pe.type = PERF_TYPE_RAW;
-                    break;
-                default:
-		    perf_cpu[cpu][i].fd = -1;
-		    perf_cpu[cpu][i].id = -1;
-                    pe.type = PERF_TYPE_RAW;
-		    continue;
-            }
+                struct perf_event_attr pe;
+                memset(&pe, 0, sizeof(pe));
+                pe.size = sizeof(pe);
+                pe.type = PERF_TYPE_SOFTWARE;
+                pe.config = config;
+                pe.exclude_hv = true;
+                pe.exclude_kernel = false;
+                pe.disabled = true;
+                pe.read_format = PERF_FORMAT_ID | PERF_FORMAT_GROUP;
 
-            pe.size = sizeof(pe);
-            //pe.type = PERF_TYPE_RAW;
-            pe.config = config;
-            pe.exclude_hv = true;
-            pe.exclude_kernel = true;
-            pe.disabled = true;
-            pe.read_format = PERF_FORMAT_ID | PERF_FORMAT_GROUP;
+                const auto fd = perf_event_open(&pe, -1, cpu, group_fd, 0);
+                if(fd == -1)
+                {
+                     perror("scheduler: failed to initialise perf");
+                     abort();
+                }
 
-            const auto fd = perf_event_open(&pe, -1, cpu, group_fd, 0);
-            if(fd == -1)
-            {
-                perror("scheduler: failed to initialise perf");
-                abort();
-            }
-
-            perf_cpu[cpu][i].fd = fd;
-            ioctl(fd, PERF_EVENT_IOC_ID, &perf_cpu[cpu][i].id);
-            ioctl(fd, PERF_EVENT_IOC_RESET, 0);
-            perf_cpu[cpu][i].prev_value = 0;
-        }
+                perf_sw[cpu][i].fd = fd;
+                ioctl(fd, PERF_EVENT_IOC_ID, &perf_sw[cpu][i].id);
+                ioctl(fd, PERF_EVENT_IOC_RESET, 0);
+                perf_sw[cpu][i].prev_value = 0;
+          }
     }
-    curr_index_pmc_a15 +=6;
 
-#else
+
+    for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
+    {
+        const auto leader_fd = perf_cpu[cpu][0].fd;
+        ioctl(leader_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+    }
+
+    for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
+    {
+        const auto leader_fd = perf_sw[cpu][0].fd;
+        ioctl(leader_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+    }
+}
+
+
+void perf_init_big()
+{
+    auto perf_event_open = [](struct perf_event_attr *hw_event, pid_t pid,
+                               int cpu, int group_fd, unsigned long flags) {
+        return syscall(__NR_perf_event_open, hw_event, pid, cpu,
+                       group_fd, flags);
+    };
+
+    num_processors = get_nprocs_conf();
+    assert(num_processors <= MAX_PROCESSORS);
+
     for(int cpu = START_INDEX_BIG; cpu <= END_INDEX_BIG; ++cpu)
     {
         for(int i = 0; i < MAX_EVENTS_PER_GROUP; ++i)
@@ -368,8 +267,7 @@ void perf_init()
         }
     }
 
-#endif
-    for(int cpu = 0; cpu < num_processors; ++cpu)
+    for(int cpu = START_INDEX_BIG; cpu <= END_INDEX_BIG; ++cpu)
     {
 
         for(int i = 0; i < NUM_SOFTWARE_COUNTERS; ++i)
@@ -418,6 +316,172 @@ void perf_init()
           }
     }
 
+    for(int cpu = START_INDEX_BIG; cpu <= END_INDEX_BIG; ++cpu)
+    {
+        const auto leader_fd = perf_cpu[cpu][0].fd;
+        ioctl(leader_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+    }
+
+    for(int cpu = START_INDEX_BIG; cpu <= END_INDEX_BIG; ++cpu)
+    {
+        const auto leader_fd = perf_sw[cpu][0].fd;
+        ioctl(leader_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+    }
+}
+
+
+void perf_init_biglittle()
+{
+    auto perf_event_open = [](struct perf_event_attr *hw_event, pid_t pid,
+                               int cpu, int group_fd, unsigned long flags) {
+        return syscall(__NR_perf_event_open, hw_event, pid, cpu,
+                       group_fd, flags);
+    };
+
+    num_processors = get_nprocs_conf();
+    assert(num_processors <= MAX_PROCESSORS);
+
+    for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
+    {
+        for(int i = 0; i < MAX_EVENTS_PER_GROUP; ++i)
+        {
+            uint64_t config;
+            int group_fd;
+            struct perf_event_attr pe;
+            memset(&pe, 0, sizeof(pe));
+
+
+            switch(i)
+            {
+                case 0:
+		    config = PERF_COUNT_HW_CPU_CYCLES;
+		    group_fd = -1;
+                    pe.type = PERF_TYPE_HARDWARE;
+		    break;
+                case 1:
+		    config = 0x15;//dcache_evic
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+                case 2:
+		    config = 0x04;//data_rw_cache_access
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+		case 3:
+                    config = 0x1D;//bus cycle
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+		case 4:
+                    config = 0xC1;//no_cache_ext_mem_req
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+                default:
+		    perf_cpu[cpu][i].fd = -1;
+		    perf_cpu[cpu][i].id = -1;
+                    pe.type = PERF_TYPE_RAW;
+		    continue;
+            }
+
+            pe.size = sizeof(pe);
+            //pe.type = PERF_TYPE_RAW;
+            pe.config = config;
+            pe.exclude_hv = true;
+            pe.exclude_kernel = true;
+            pe.disabled = true;
+            pe.read_format = PERF_FORMAT_ID | PERF_FORMAT_GROUP;
+
+            const auto fd = perf_event_open(&pe, -1, cpu, group_fd, 0);
+            if(fd == -1)
+            {
+                perror("scheduler: failed to initialise perf");
+                abort();
+            }
+
+            perf_cpu[cpu][i].fd = fd;
+            ioctl(fd, PERF_EVENT_IOC_ID, &perf_cpu[cpu][i].id);
+            ioctl(fd, PERF_EVENT_IOC_RESET, 0);
+            perf_cpu[cpu][i].prev_value = 0;
+        }
+    }
+
+    for(int cpu = START_INDEX_BIG; cpu <= END_INDEX_BIG; ++cpu)
+    {
+        for(int i = 0; i < MAX_EVENTS_PER_GROUP; ++i)
+        {
+            uint64_t config;
+            int group_fd;
+            struct perf_event_attr pe;
+            memset(&pe, 0, sizeof(pe));
+
+
+            switch(i)
+            {
+                case 0:
+		    config = PERF_COUNT_HW_CPU_CYCLES;
+		    group_fd = -1;
+                    pe.type = PERF_TYPE_HARDWARE;
+		    break;
+                case 1:
+		    config = 0x48;//L1D_CACHE_INVAL
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+                case 2:
+		    config = 0x46;//L1D_CACHE_WB_VICTIM
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+		case 3:
+                    config = 0x16;//L2D_CACHE_ACCESS
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+		case 4:
+                    config = 0x73;//DP_SPEC
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+		    break;
+                case 5:
+                    config = 0x01;//L1I_CACHE_REFILL
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+                    break;
+                case 6:
+                    config = 0x47;//L1D_CACHE_WB_CLEAN
+		    group_fd = perf_cpu[cpu][0].fd;
+                    pe.type = PERF_TYPE_RAW;
+                    break;
+                default:
+		    perf_cpu[cpu][i].fd = -1;
+		    perf_cpu[cpu][i].id = -1;
+                    pe.type = PERF_TYPE_RAW;
+		    continue;
+            }
+
+            pe.size = sizeof(pe);
+            //pe.type = PERF_TYPE_RAW;
+            pe.config = config;
+            pe.exclude_hv = true;
+            pe.exclude_kernel = true;
+            pe.disabled = true;
+            pe.read_format = PERF_FORMAT_ID | PERF_FORMAT_GROUP;
+
+            const auto fd = perf_event_open(&pe, -1, cpu, group_fd, 0);
+            if(fd == -1)
+            {
+                perror("scheduler: failed to initialise perf");
+                abort();
+            }
+
+            perf_cpu[cpu][i].fd = fd;
+            ioctl(fd, PERF_EVENT_IOC_ID, &perf_cpu[cpu][i].id);
+            ioctl(fd, PERF_EVENT_IOC_RESET, 0);
+            perf_cpu[cpu][i].prev_value = 0;
+        }
+    }
 
     for(int cpu = 0; cpu < num_processors; ++cpu)
     {
@@ -432,7 +496,6 @@ void perf_init()
     }
 
 }
-
 
 void perf_shutdown()
 {
