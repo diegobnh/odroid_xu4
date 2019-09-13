@@ -238,7 +238,7 @@ static bool create_time_file(uint64_t time_ms)
     return true;
 }
 
-static bool spawn_agent(const char* command)
+static bool spawn_predictor(const char* command)
 {
     int inpipefd[2] = {-1, -1};
     int outpipefd[2] = {-1, -1};
@@ -476,20 +476,24 @@ int main(int argc, char* argv[])
     }
 
     const int num_episodes = 1; // Predictor should run a single episode
-    if(!spawn_agent("python3 ./predictor.py"))
+    if(!spawn_predictor("python3 ./predictor.py"))
     {
         cleanup();
         return 1;
     }
-
+    usleep(5000000);//time to load model
+    
+    if(!spawn_application(&argv[1]))
+    {
+        fprintf(stderr,"Spawn application\n");
+        cleanup();
+        return 1;
+    }
+    ::save_application_pid = ::application_pid;
+   
     for(int curr_episode = 0; curr_episode < num_episodes; ++curr_episode)
     {
-        perf_init();
-
-        {
-            cleanup();
-            return 1;
-        }
+        perf_init_big();
 
         fprintf(stderr, "\n\nscheduler: starting episode %d with pid %d\n\n", curr_episode + 1, application_pid);
 
@@ -506,21 +510,30 @@ int main(int argc, char* argv[])
                 assert(pid == ::application_pid);
                 application_pid = -1;
 
+                update_scheduler();
+
                 float exec_time;
+                int state_index_reply;
+                if(::application_pid == -1) // end of episode
+                {
+                     exec_time = to_millis(get_time() - ::application_start_time);
+                     fprintf(stderr,"Exec_Time:%lf seconds\n", exec_time*0.001);
+                     //send_to_scheduler("%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%d",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1);
 
-                exec_time = to_millis(get_time() - ::application_start_time);
-
+                     //create_time_file(exec_time);
+                     //recv_from_scheduler("%d", &state_index_reply);
+                }
             }
+            else
+            {
+                update_scheduler();
+            }
+
             usleep(200000);//20 miliseconds
         }
 
         perf_shutdown();
 
-
-        create_time_file(exec_time);
-
-
-        usleep(5000000); //only to clear anything in cpu - 2 seconds
         fprintf(stderr, "scheduler: episode %d finished\n", curr_episode + 1);
     }
 
