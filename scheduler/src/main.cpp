@@ -385,14 +385,14 @@ static void update_scheduler()
         }
     }
 
-    if(current_state==STATE_4l4b  && (l_pmu_1 < 0.000001 || b_pmu_1 < 0.000001))
+    if(current_state==STATE_4l4b  && (l_pmc_1 < 0.000001 || b_pmc_1 < 0.000001))
     {
         return;
     }
-    else if(current_state==STATE_4l && l_pmu_1 < 0.000001){
+    else if(current_state==STATE_4l && l_pmc_1 < 0.000001){
         return;
     }
-    else if(current_state==STATE_4b && b_pmu_1 < 0.000001){
+    else if(current_state==STATE_4b && b_pmc_1 < 0.000001){
         return;
     }
     
