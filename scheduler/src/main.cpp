@@ -424,9 +424,6 @@ int main(int argc, char* argv[])
 
         perf_shutdown();
 
-
-        create_time_file(to_millis(get_time() - ::application_start_time));
- 
         usleep(5000000); //only to clear anything in cpu - 2 seconds
         fprintf(stderr, "scheduler: episode %d finished\n", curr_episode + 1);
     }
