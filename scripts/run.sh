@@ -27,7 +27,8 @@ do
     cd $i
     echo "4b4l_A15 Folder:"$i
     bash ../postprocess_experiment.sh "big"
-    cat times.txt | tr "." "," | datamash sstdev 1 > desv
+    cat times.txt | tr "." "," | datamash sstdev 1 > temp
+    cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' > desv
     cd .. ; 
 done
 
@@ -38,7 +39,8 @@ do
     cd $i
     echo "4b4l_A7 Folder:"$i
     bash ../postprocess_experiment.sh "little"       
-    cat times.txt | tr "." "," | datamash sstdev 1 > desv
+    cat times.txt | tr "." "," | datamash sstdev 1 > temp
+    cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' > desv
     cd .. ; 
 done
 
@@ -49,7 +51,7 @@ done
 
 echo ""
 cat */desv
-read -p "Veja se alguma aplicação possui um desvio padrão alto(>3). Se tiver, altere a media na mão."
+read -p "Veja se alguma aplicação possui um desvio padrão alto(>3)."
 
 
 #Get the execution time from each config
