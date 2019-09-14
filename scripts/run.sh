@@ -6,7 +6,7 @@
 #A saida será todos os performance counter como média e três colunas ao final que se refere ao speedup no 4l, 4b, 4b4l. 
 
 
-rm *.csv
+rm -f -- *.csv
 
 #remove files existentes
 FOLDERS=`ls -d */`
