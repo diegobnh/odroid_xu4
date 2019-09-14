@@ -139,7 +139,7 @@ fi
 
 
 #cada aplicação terá um exec_time.average
-cat times.txt | tr "." "," | datamash mean 1 | tr "," "." > exec_time.average
+cat times.txt | datamash mean 1 | tr "," "." > exec_time.average
 
 
 #Calculate the average for each feature 
