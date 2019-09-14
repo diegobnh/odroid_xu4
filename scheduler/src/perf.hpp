@@ -7,10 +7,8 @@
 #define START_INDEX_BIG 4
 #define END_INDEX_BIG 7
 
-//only one at a time may be enabled
-#define PMCS_A15_ONLY
-//#define PMCS_A7_ONLY
-
+#define PMCS_A7_ONLY 0
+#define PMCS_A15_ONLY 1
 
 /// Software hardware counters.
 struct PerfSoftwareData
