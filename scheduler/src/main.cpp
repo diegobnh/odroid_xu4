@@ -16,6 +16,14 @@
 #define FLAG_ONLY_PARALLEL_REGION 0
 #define NUM_EPISODES 1000
 
+#ifndef PMC_TYPE
+#   error Please define PMC_TYPE
+#endif
+
+#if !(PMC_TYPE >= 0 && PMC_TYPE <= 1)
+#   error PMC_TYPE must be 0 or 1
+#endif
+
 char** environ;
 
 static FILE* collect_stream = 0;
@@ -126,7 +134,7 @@ static bool create_logging_file()
 {
 
 
-#ifdef PMCS_A15_ONLY
+#if PMC_TYPE == PMCS_A15_ONLY
     char pmcs[10][35]={"0x01_0x02_0x03_0x04_0x05_0x08",
                        "0x09_0x10_0x12_0x13_0x14_0x15",
                        "0x16_0x17_0x18_0x19_0x1B_0x1D",
@@ -138,7 +146,7 @@ static bool create_logging_file()
                        "0x73_0x74_0x75_0x76_0x78_0x79",
                        "0x7A_0x7E_0x00_0x00_0x00_0x00"};
 
-#elif defined PMCS_A7_ONLY
+#elif PMC_TYPE == PMCS_A7_ONLY
     char pmcs[9][35]={"0x01_0x02_0x03_0x04",
                       "0x05_0x06_0x07_0x08",
                       "0x09_0x0A_0x0C_0x0D",
@@ -153,7 +161,7 @@ static bool create_logging_file()
     static int index_pmc=0;
     char filename[PATH_MAX];
 
-#if defined PMCS_A7_ONLY || defined PMCS_A15_ONLY 
+#if PMC_TYPE == PMCS_A7_ONLY || PMC_TYPE == PMCS_A15_ONLY
     if(index_pmc >=0 && index_pmc<=10){
        sprintf(filename, "%s.csv", pmcs[index_pmc]);
        index_pmc ++;
@@ -300,8 +308,7 @@ static void update_scheduler()
     State next_state = current_state;
 
 
-
-#ifdef PMCS_A15_ONLY
+#if PMC_TYPE == PMCS_A15_ONLY
     fprintf(collect_stream, "%" PRIu64 \
                             ",%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf," \
                             "%.2lf,%.2lf,%.2lf,%.2lf\n" ,
@@ -309,8 +316,7 @@ static void update_scheduler()
                             b_pmc_1, b_pmc_2, b_pmc_3, b_pmc_4, b_pmc_5, b_pmc_6, b_pmc_7, \
                             total_cpu_migration, total_context_switch, cpu_usage[0], cpu_usage[1]);
 
-
-#elif defined PMCS_A7_ONLY
+#elif PMC_TYPE == PMCS_A7_ONLY
     fprintf(collect_stream, "%" PRIu64 \
                             ",%.2lf,%.2lf,%.2lf,%.2lf,%.2lf," \
                             "%.2lf,%.2lf,%.2lf,%.2lf\n" ,
@@ -375,9 +381,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-#ifdef PMCS_A15_ONLY
+#if PMC_TYPE == PMCS_A15_ONLY
     const int num_episodes = 10;//number of time to collect all pmcs from big core
-#elif defined PMCS_A7_ONLY
+#elif PMC_TYPE == PMCS_A7_ONLY
     const int num_episodes = 9;//number of time to collect all pmcs from little core
 #else
     const int num_episodes = 1;
@@ -397,7 +403,7 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        fprintf(stderr, "\n\nscheduler: starting episode %d with pid %d\n\n", curr_episode + 1, application_pid);
+        fprintf(stderr, "scheduler: starting episode %d with pid %d\n\n", curr_episode + 1, application_pid);
 
         while(::application_pid != -1)
         {
