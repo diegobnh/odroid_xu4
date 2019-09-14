@@ -123,7 +123,7 @@ rm -r $SUIT_NAME"strassen" ; sleep 3;
 
 SUIT_NAME="4b4l_A15_bots_"
 
-taskset -a -c 0-7 ./bin/scheduler /home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 36
+taskset -a -c 0-7 ./bin/scheduler_A15 /home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 36
 mkdir $SUIT_NAME"fib"; mv *.csv $SUIT_NAME"fib"; tar -cf $SUIT_NAME"fib.tar" $SUIT_NAME"fib";
 rm -r $SUIT_NAME"fib"; sleep 3;
 
