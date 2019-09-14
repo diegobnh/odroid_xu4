@@ -51,8 +51,6 @@ done
 
 echo ""
 cat */desv
-read -p "Veja se alguma aplicação possui um desvio padrão alto(>3)."
-
 
 #Get the execution time from each config
 cat 4b4l_A7*/exec_time.average > 4b4l_1
