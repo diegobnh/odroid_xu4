@@ -6,5 +6,6 @@ all: build
 
 build:
 	mkdir -p bin
-	$(CXX) $(CXXFLAGS) $(SRC_FILES) -o bin/scheduler
+	$(CXX) $(CXXFLAGS) $(SRC_FILES) -o bin/scheduler_A7 -DPMC_TYPE=0
+	$(CXX) $(CXXFLAGS) $(SRC_FILES) -o bin/scheduler_A15 -DPMC_TYPE=1
 
