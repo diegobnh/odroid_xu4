@@ -1,13 +1,17 @@
 #!/bin/sh
 
-#Esse script deve estar junto com as pastas referente aos outputs. E o script postprocess deve estar um diretório acima.
+#Esse script deve estar junto com as pastas referente aos outputs. Deixe apenas as pastas e remove os arquivos comprimidos.
+
+#Para descomprimir todas as pastas execute o comando abaixo:
+#cat *.tar | tar -xf - -i
 
 #Alterado para a proposta de multioutput regressor.Por isso, apenas um arquivo para cada configuração será gerado.
 #A saida será todos os performance counter como média e três colunas ao final que se refere ao speedup no 4l, 4b, 4b4l. 
 
 
-rm -f -- *.csv
 
+
+rm -f -- *.csv
 #remove files existentes
 FOLDERS=`ls -d */`
 for i in $FOLDERS ;
@@ -147,13 +151,5 @@ rm to_* average_samples_* temp*
 sed -i 's/,,/,/g' 4l.csv
 sed -i 's/,,/,/g' 4b.csv
 sed -i 's/,,/,/g' 4b4l.csv
-#7 primeiras colunas nulas seguida de 5 colunas com valores, mais três colunas referentes a performance no tempo
-#cat 4l.csv | tr ',' '\t' | awk '{printf "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", 0,0,0,0,0,0,0,$1,$3,$5,$7,$9,$34,$35,$36}' > temp1
-#7 primeiras colunas com valores seguida de 5 colunas nulas, mais três colunas referentes a performance no tempo
-#cat 4b.csv | tr ',' '\t' | awk '{printf "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", $1,$3,$5,$7,$9,$11,$13,0,0,0,0,0,$57,$58,$59}' > temp2 
-#não há coluna nula na config 4b4l
-#cat 4b4l.csv | tr ',' '\t' | awk '{printf "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", $1,$3,$5,$7,$9,$11,$13,$1,$3,$5,$7,$9, $89,$90,$91}' > temp3
-
-#cat *.csv > dataset.csv
 
 
