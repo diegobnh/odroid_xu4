@@ -26,7 +26,7 @@ for i in $FOLDERS ;
 do  
     cd $i
     echo "4b4l_A15 Folder:"$i
-    bash ../../postprocess_experiment.sh "big"
+    bash ../postprocess_experiment.sh "big"
     cat times.txt | tr "." "," | datamash sstdev 1 > desv
     cd .. ; 
 done
@@ -37,7 +37,7 @@ for i in $FOLDERS ;
 do  
     cd $i
     echo "4b4l_A7 Folder:"$i
-    bash ../../postprocess_experiment.sh "little"       
+    bash ../postprocess_experiment.sh "little"       
     cat times.txt | tr "." "," | datamash sstdev 1 > desv
     cd .. ; 
 done
@@ -65,18 +65,6 @@ paste 4b4l 4b 4l | awk '{printf "%.6f,%.6f\n", $2/$3, $2/$1}' > speedup_4b
 paste 4b4l 4b 4l | awk '{printf "%.6f,%.6f\n", $1/$3, $1/$2}' > speedup_4b4l 
 
 rm 4b4l 4b4l_1 4b4l_2 4b 4l 
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
