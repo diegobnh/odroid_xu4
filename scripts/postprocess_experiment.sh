@@ -139,6 +139,7 @@ fi
 
 
 #cada aplicação terá um exec_time.average
+#O datamash na versão do arm faz as operações usando "ponto". Então esse código não vai funcionar no arm.
 cat times.txt | tr "." "," | datamash mean 1 | tr "," "." > exec_time.average
 
 
