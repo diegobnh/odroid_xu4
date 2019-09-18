@@ -15,18 +15,6 @@
 
 #define NUM_EPISODES 1000
 
-#ifndef SCHEDULER_TYPE
-#   error Please define SCHEDULER_TYPE
-#endif
-
-#if !(SCHEDULER_TYPE >= 0 && SCHEDULER_TYPE <= 2)
-#   error SCHEDULER_TYPE must be 0, 1 or 2
-#endif
-
-#define SCHEDULER_TYPE_COLLECT 0
-#define SCHEDULER_TYPE_PREDICTOR 1
-#define SCHEDULER_TYPE_AGENT 2
-
 char** environ;
 
 static FILE* collect_stream = 0;
