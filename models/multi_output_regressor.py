@@ -29,8 +29,8 @@ dataframe = pd.read_csv(fileName)
 df = dataframe[select_features]
 
 
-df_X = df.iloc[:, 0:(len(df.columns) - 3)]
-df_Y = df.iloc[:, len(df.columns) - 3: len(df.columns)] 
+df_X = df.iloc[:, 0:(df.columns - 3)]
+df_Y = df.iloc[:, df.columns - 3: len(df.columns)] 
 
 
 X = df_X.values
