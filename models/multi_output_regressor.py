@@ -5,6 +5,7 @@ from joblib import *
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import r2_score
 
 
@@ -24,21 +25,19 @@ elif core == 'biglittle':
 else:
    print("Entrada invalida!!")
 
-
 dataframe = pd.read_csv(fileName)
 df = dataframe[select_features]
 
-
-df_X = df.iloc[:, 0:(df.columns - 3)]
-df_Y = df.iloc[:, df.columns - 3: len(df.columns)] 
-
+df_X = df.iloc[:, 0:len(df.columns)-3]
+df_Y = df.iloc[:, len(df.columns)-3: len(df.columns)] 
 
 X = df_X.values
 Y = df_Y.values
 
 models= [("Decision_Tree_Regressor", DecisionTreeRegressor(max_depth=9)), #random_state=0,
          ('KNN_Regressor', KNeighborsRegressor(n_neighbors=2)),              
-         ("Random_Forest_Regressor", RandomForestRegressor(n_estimators=550, n_jobs=-1)) #random_state=0,
+         ("Random_Forest_Regressor", RandomForestRegressor(n_estimators=550, n_jobs=-1)), #random_state=0,
+         ("Neural_Network", MLPRegressor(hidden_layer_sizes=(500,300,150),alpha=0.01, batch_size=16,max_iter=10000, activation='relu', solver='adam', learning_rate='adaptive'))
         ]
 
 for name, model in models:
