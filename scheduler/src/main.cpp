@@ -301,7 +301,7 @@ static bool spawn_application(char* argv[])
     {
         ::application_pid = pid;
         ::application_start_time = get_time();
-        ::current_state = STATE_4b;
+        ::current_state = STATE_4l4b;
         update_scheduler_to_serial_region();
         return true;
     }
@@ -313,7 +313,7 @@ static void update_scheduler_to_serial_region()
     if(::application_pid != -1)
     {
         char buffer[512];
-        auto cfg = configs[STATE_4b];
+        auto cfg = configs[STATE_4l4b];
 
         sprintf(buffer, "taskset -pac %s %d >/dev/null", cfg, application_pid);
 
@@ -327,7 +327,7 @@ static void update_scheduler_to_serial_region()
             fprintf(stderr, "scheduler: taskset returned %d :(\n", status);
         }
 
-        current_state = STATE_4b;
+        current_state = STATE_4l4b;
     }
 
 }
@@ -368,6 +368,29 @@ static void update_scheduler()
     }
 
     if(current_state==STATE_4b){
+        for(int cpu = START_INDEX_BIG; cpu < END_INDEX_BIG; ++cpu)
+        {
+           const auto hw_data = perf_consume_hw(cpu);
+           b_pmc_1 += (double)hw_data.pmc_1;
+           b_pmc_2 += (double)hw_data.pmc_2;
+           b_pmc_3 += (double)hw_data.pmc_3;
+           b_pmc_4 += (double)hw_data.pmc_4;
+           b_pmc_5 += (double)hw_data.pmc_5;
+           b_pmc_6 += (double)hw_data.pmc_6;
+           b_pmc_7 += (double)hw_data.pmc_7;
+       }
+    }
+    
+    if(current_state==STATE_4l4b){
+        for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
+        {
+           const auto hw_data = perf_consume_hw(cpu);
+           l_pmc_1 += (double)hw_data.pmc_1;
+           l_pmc_2 += (double)hw_data.pmc_2;
+           l_pmc_3 += (double)hw_data.pmc_3;
+           l_pmc_4 += (double)hw_data.pmc_4;
+           l_pmc_5 += (double)hw_data.pmc_5;
+        }
         for(int cpu = START_INDEX_BIG; cpu < END_INDEX_BIG; ++cpu)
         {
            const auto hw_data = perf_consume_hw(cpu);
@@ -478,7 +501,7 @@ int main(int argc, char* argv[])
 
     for(int curr_episode = 0; curr_episode < num_episodes; ++curr_episode)
     {
-        perf_init_big();
+        perf_init_biglittle();
 
         fprintf(stderr, "\n\nscheduler: starting episode %d with pid %d\n\n", curr_episode + 1, application_pid);
 
