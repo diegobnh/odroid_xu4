@@ -26,7 +26,7 @@ elif core == 'big':
 elif core == 'biglittle':
    #select_features=['dcache_evic:0x15','data_rw_cache_access:0x04','bus_cycle:0x1D','no_cache_ext_mem_req:0xC1','L1D_CACHE_INVAL:0x48','L1D_CACHE_WB_VICTIM:0x46','L2D_CACHE_ACCESS:0x16','DP_SPEC:0x73','L1I_CAC$
    #select_features=['dcache_evic:0x15','data_read_exec:0x06','bus_cycle:0x1D','l2d_cache_write:0x18','L1D_CACHE_INVAL:0x48','L1D_CACHE_WB_CLEAN:0x47','L2D_CACHE_ACCESS:0x16','L2D_CACHE_ST:0x51','L1D_CACHE_WB_V$
-   select_features=['bus_cycle:0x1D','data_rw_refill:0x03','un_load_store:0x0F','l2d_cache_write:0x18','MEM_ACCESS_ST:0X67','L2D_CACHE_LD:0x50','L1D_CACHE_ST:0x41','L1D_CACHE_WB_CLEAN:0x47','L1D_CACHE_WB_VICTIM$
+   select_features=['bus_cycle:0x1D','data_rw_refill:0x03','un_load_store:0x0F','l2d_cache_write:0x18','MEM_ACCESS_ST:0X67','L2D_CACHE_LD:0x50','L1D_CACHE_ST:0x41','L1D_CACHE_WB_CLEAN:0x47','L1D_CACHE_WB_VICTIM:0x46','L1D_CACHE_INVAL:0x48','speedup4l','speedup4b','speedup4b4l']
 else:
    print("Entrada invalida!!")
 
