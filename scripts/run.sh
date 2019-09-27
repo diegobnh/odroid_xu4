@@ -78,7 +78,7 @@ rm 4b4l 4b4l_1 4b4l_2 4b 4l
 #------------------------------
 #Calculate dataset for 4little
 #------------------------------
-FOLDERS=`ls -d 4l_bots*`
+FOLDERS=`ls -d 4l_*`
 for i in $FOLDERS ;
 do  
     cd $i 
@@ -98,7 +98,7 @@ rm to_*
 #Calculate dataset for 4big
 #--------------------------
 
-FOLDERS=`ls -d 4b_bots*`
+FOLDERS=`ls -d 4b_*`
 for i in $FOLDERS ;
 do  
     cd $i 
