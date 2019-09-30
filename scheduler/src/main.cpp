@@ -1,3 +1,4 @@
+#include <string.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
@@ -9,27 +10,35 @@
 #include <sys/prctl.h>
 #include <linux/limits.h>
 #include <signal.h> 
+#include <iostream>
+#include <fcntl.h>
+#include <time.h>
 #include "perf.hpp"
 #include "time.hpp"
 #include "states.hpp" 
 
-#define NUM_EPISODES 1000
+#define TOTAL_DIFFERENT_PMCS 20
+
+enum { MAX_ARGS = 64 };
+char *args[MAX_ARGS];
+char **next = ::args;
 
 char** environ;
 
 static FILE* collect_stream = 0;
 static FILE* cpu_utilization_stream = 0;
-static int scheduler_input_pipe = -1;
-static int scheduler_output_pipe = -1;
-static int scheduler_pid = -1;
+static int predictor_input_pipe = -1;
+static int predictor_output_pipe = -1;
+static int predictor_pid = -1;
 static int application_pid = -1;
 static uint64_t application_start_time = 0;
 static State current_state;
 static int flag_update_schedule;
 static int save_application_pid;
-
 static void update_scheduler_to_serial_region();
-
+static int change_config = 0;
+static double sum_time=0;
+static unsigned int  count_time=0;
 
 void get_cpu_usage(double *cpu_usage)
 {
@@ -109,6 +118,20 @@ void get_cpu_usage(double *cpu_usage)
 
 
 
+void get_input(char *line) {        
+    char *temp = NULL;
+    
+    temp = strtok(line, " ");
+    while (temp != NULL)
+    {
+        *next++ = temp; //this is global variable
+        temp = strtok(NULL, " ");
+    }
+    *next = NULL;
+    
+
+}
+
 static void send_to_scheduler(const char* fmt, ...)
 {
     char buffer[512];
@@ -128,7 +151,7 @@ static void send_to_scheduler(const char* fmt, ...)
         buffer[count++] = '\n';
         buffer[count] = '\0';
 
-        int written = write(scheduler_input_pipe, buffer, count);
+        int written = write(predictor_input_pipe, buffer, count);
         if(written == -1)
         {
             perror("scheduler: failed to write to scheduler");
@@ -149,7 +172,7 @@ static void recv_from_scheduler(const char* fmt, ...)
 
     while(count == 0 || buffer[count-1] != '\n')
     {
-        const auto result = read(scheduler_output_pipe, buffer, sizeof(buffer) - count);
+        const auto result = read(predictor_output_pipe, buffer, sizeof(buffer) - count);
         if(result <= 0)
         {
             perror("scheduler: failed to read from scheduler pipe\n");
@@ -168,7 +191,6 @@ static void recv_from_scheduler(const char* fmt, ...)
 
 static void cleanup()
 {
-    fprintf(stderr, "scheduler: cleaning up\n");
 
     if(application_pid != -1)
     {
@@ -177,23 +199,25 @@ static void cleanup()
         application_pid = -1;
     }
 
-    if(scheduler_pid != -1)
+    if(predictor_pid != -1)
     {
-        kill(scheduler_pid, SIGTERM);
-        waitpid(scheduler_pid, nullptr, 0);
-        scheduler_pid = -1;
+        kill(predictor_pid, SIGTERM);
+        waitpid(predictor_pid, nullptr, 0);
+        predictor_pid = -1;
     }
 
-    if(scheduler_input_pipe != -1)
+
+    if(predictor_input_pipe != -1)
     {
-        close(scheduler_input_pipe);
-        scheduler_input_pipe = -1;
+        close(predictor_input_pipe);
+        predictor_input_pipe = -1;
     }
 
-    if(scheduler_output_pipe != -1)
+
+    if(predictor_output_pipe != -1)
     {
-        close(scheduler_output_pipe);
-        scheduler_output_pipe = -1;
+        close(predictor_output_pipe);
+        predictor_output_pipe = -1;
     }
 
     if(collect_stream != 0)
@@ -201,6 +225,7 @@ static void cleanup()
         fclose(collect_stream);
         collect_stream = 0;
     }
+
 }
 
 static bool create_logging_file()
@@ -276,15 +301,16 @@ static bool spawn_predictor(const char* command)
     {
         close(outpipefd[0]);
         close(inpipefd[1]);
-        ::scheduler_pid = pid;
-        ::scheduler_input_pipe = outpipefd[1];
-        ::scheduler_output_pipe = inpipefd[0];
+        ::predictor_pid = pid;
+        ::predictor_input_pipe = outpipefd[1];
+        ::predictor_output_pipe = inpipefd[0];
         return true;
-    }
+    } 
 }
 
-static bool spawn_application(char* argv[])
+static bool spawn_application(char* apps)
 {
+
     int pid = fork();
     if(pid == -1)
     {
@@ -293,7 +319,8 @@ static bool spawn_application(char* argv[])
     }
     else if(pid == 0)
     {
-        execvp(argv[0], argv);
+        get_input(apps);
+        execvp(args[0], args);
         perror("scheduler: execvp failed");
         return false;
     }
@@ -367,7 +394,8 @@ static void update_scheduler()
         }
     }
 
-    if(current_state==STATE_4b){
+    if(current_state==STATE_4b)
+    {
         for(int cpu = START_INDEX_BIG; cpu < END_INDEX_BIG; ++cpu)
         {
            const auto hw_data = perf_consume_hw(cpu);
@@ -380,8 +408,9 @@ static void update_scheduler()
            b_pmc_7 += (double)hw_data.pmc_7;
        }
     }
-    
-    if(current_state==STATE_4l4b){
+
+   if(current_state==STATE_4l4b){
+
         for(int cpu = START_INDEX_LITTLE; cpu <= END_INDEX_LITTLE; ++cpu)
         {
            const auto hw_data = perf_consume_hw(cpu);
@@ -422,13 +451,18 @@ static void update_scheduler()
     int state_index_reply;
     float exec_time = -1.0;
 
-    
+
     send_to_scheduler("%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%.6lf,%d", \
                       l_pmc_1, l_pmc_2, l_pmc_3, l_pmc_4, l_pmc_5, \
                       b_pmc_1, b_pmc_2, b_pmc_3, b_pmc_4, b_pmc_5, b_pmc_6, b_pmc_7, \
                       current_state);
 
+    clock_t start, end;
+    start = clock();
     recv_from_scheduler("%d", &state_index_reply);//Here is State enumerate
+    end = clock()-start;
+    sum_time += ((double)end)/CLOCKS_PER_SEC; // in seconds
+    ::count_time+=1;
 
     next_state = static_cast<State>(state_index_reply);
 
@@ -438,7 +472,7 @@ static void update_scheduler()
         auto cfg = configs[next_state];//extern variable declared in States.h
 
         sprintf(buffer, "taskset -pac %s %d >/dev/null", cfg, application_pid);
-        fprintf(stderr, "scheduler: %s\n", buffer);
+        //fprintf(stderr, "scheduler: %s\n", buffer);
 
 
         perf_shutdown();
@@ -467,43 +501,83 @@ static void update_scheduler()
         }
 
         current_state = next_state;
+        ::change_config++;
     }
 }
 
 
-
 int main(int argc, char* argv[])
 {
+    unsigned int pmcs_values[TOTAL_DIFFERENT_PMCS];
+    int total_apps=12;
+    unsigned int value;
 
-    if(argc < 2)
-    {
-        fprintf(stderr, "usage: %s command args...\n", argv[0]);
-        return 1;
+    char commands[][256]={"/home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 36",
+                          "/home/odroid/workloads/bots/bin/nqueens.gcc.omp-tasks-tied -n 13",
+                          "/home/odroid/workloads/bots/bin/health.gcc.omp-tasks-tied -o 0 -f /home/odroid/workloads/bots/inputs/health/medium.input",
+                          "/home/odroid/workloads/bots/bin/floorplan.gcc.omp-tasks-tied -o 0 -f /home/odroid/workloads/bots/inputs/floorplan/input.20",
+                          "/home/odroid/workloads/bots/bin/fft.gcc.omp-tasks-tied -o 0 -n 10000000",
+                          "/home/odroid/workloads/bots/bin/sort.gcc.omp-tasks-tied -o 0 -n 100000000",
+                          "/home/odroid/workloads/bots/bin/sparselu.gcc.for-omp-tasks-tied -o 0 -n 100 -m 100",
+                          "/home/odroid/workloads/bots/bin/strassen.gcc.omp-tasks-tied -o 0 -n 4096",
+                          "/home/odroid/workloads/rodinia/openmp/backprop/backprop 10000000",
+                          "/home/odroid/workloads/rodinia/openmp/heartwall/heartwall /home/odroid/workloads/rodinia/data/heartwall/test.avi.part00 50",
+                          "/home/odroid/workloads/rodinia/openmp/lavaMD/lavaMD -boxes1d 20",
+                          "/home/odroid/workloads/rodinia/openmp/particlefilter/./particle_filter -x 512 -y 512 -z 40 -np 40000"};
+
+   
+   char apps_name[][30]={"fib",
+                         "nqueens",
+                         "health",
+                         "floorplan",
+                         "fft",
+                         "sort",
+                         "sparselu",
+                         "strassen",
+                         "backprop",
+                         "heartwall",
+                         "lavaMD",
+                         "particle_filter"}; 
+
+
+    FILE *fp_pmcs = fopen("pmcs.txt", "r");
+    if (fp_pmcs == NULL) {
+        fprintf(stderr, "Can't read pmcs.txt");
+        return 0;
     }
 
-    const int num_episodes = 1; // Predictor should run a single episode
     if(!spawn_predictor("python3 ./predictor.py"))
     {
         fprintf(stderr,"Spawn predictor\n");
         cleanup();
         return 1;
     }
-
     usleep(5000000);
- 
-    if(!spawn_application(&argv[1]))
-    {
-        fprintf(stderr,"Spawn application\n");
-        cleanup();
-        return 1;
-    }
-    ::save_application_pid = ::application_pid;
 
-    for(int curr_episode = 0; curr_episode < num_episodes; ++curr_episode)
+    //read the first 14 pmcs , after read more 14 pmcs..
+    int k=0;
+    while(fscanf(fp_pmcs, "%x,", &value) == 1 && k<TOTAL_DIFFERENT_PMCS) {//20 is total pmcs : four to little, six to big and ten to biglittle(fisrt 4 for little after 6 for big)
+           pmcs_values[k]=value;
+           k++;
+    }
+
+    set_pmcs(pmcs_values,TOTAL_DIFFERENT_PMCS);
+
+
+    for(int i = 0; i < total_apps; ++i)
     {
+        ::change_config=0;
+        if(!spawn_application(commands[i]))
+        {
+            fprintf(stderr,"Spawn application\n");
+            cleanup();
+            return 1;
+        }
+        ::save_application_pid = ::application_pid;
+
         perf_init_biglittle();
 
-        fprintf(stderr, "\n\nscheduler: starting episode %d with pid %d\n\n", curr_episode + 1, application_pid);
+        char buf[50];
 
         while(::application_pid != -1)
         {
@@ -524,23 +598,28 @@ int main(int argc, char* argv[])
                 update_scheduler();
 
                 float exec_time;
-                int state_index_reply;
+                //int state_index_reply;
                 if(::application_pid == -1) // end of episode
                 {
                      exec_time = to_millis(get_time() - ::application_start_time);
-                     fprintf(stderr,"Exec_Time:%lf seconds\n", exec_time*0.001);
-                     create_time_file(exec_time);
+                     fprintf(stderr, "%s,%lf,%d\n", apps_name[i],exec_time*0.001,::change_config);
+                     //create_time_file(exec_time);
+                     send_to_scheduler("0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1");
+                     //fprintf(stderr, "Average time spend model:%lf\n",sum_time/count_time); 
+                     ::sum_time=0.0;
+                     ::count_time=0.0;
                 }
             }
-
-            usleep(200000);//20 miliseconds
+            usleep(200000);//200 miliseconds
         }
-
+        usleep(5000000);
         perf_shutdown();
 
-        fprintf(stderr, "scheduler: episode %d finished\n", curr_episode + 1);
+        //sprintf(buf, "mv output_predictor.txt %s", apps_name[i]);
+        //system(buf);
     }
-
     cleanup();
+    usleep(200000);//200 miliseconds
+  
     return 0;
 }
