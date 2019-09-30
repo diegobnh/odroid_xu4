@@ -34,6 +34,23 @@ static PerfEvent perf_cpu[MAX_PROCESSORS][MAX_EVENTS_PER_GROUP];
 static PerfEvent perf_sw[MAX_PROCESSORS][NUM_SOFTWARE_COUNTERS];
 static int num_processors;
 
+int *pmcs=NULL;//0-3 four pmcs little, 4-9 six pmcs big, 10-19 ten pmcs biglittle
+
+void set_pmcs(unsigned int *values, int num_pmcs)
+{
+     int i;
+
+     if(pmcs == NULL){
+        pmcs = (int*)malloc(num_pmcs*sizeof(int));
+        if(pmcs==NULL){
+           fprintf(stderr,"Fail in malloc\n");
+           exit(-1);
+        }
+     }
+
+     for(i=0;i<num_pmcs;i++)
+        pmcs[i] = values[i];
+}
 
 void perf_init_little()
 {
@@ -66,22 +83,22 @@ void perf_init_little()
                     pe.type = PERF_TYPE_HARDWARE;
 		    break;
                 case 1:
-		    config = 0xCA;
+		    config = pmcs[0];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
                 case 2:
-		    config = 0x15;
+		    config = pmcs[1];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 3:
-                    config = 0x02;
+                    config = pmcs[2];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 4:
-                    config = 0x10;
+                    config = pmcs[3];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
@@ -208,34 +225,32 @@ void perf_init_big()
                     pe.type = PERF_TYPE_HARDWARE;
 		    break;
                 case 1:
-		    config = 0x48;
+		    config = pmcs[4];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
                 case 2:
-		    config = 0x75;
+		    config = pmcs[5];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 3:
-                    config = 0x67;
+                    config = pmcs[6];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 4:
-                    config = 0x46;
+                    config = pmcs[7];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
                 case 5:
-                    config = 0x6A;
-                    config = 0x78;
+                    config = pmcs[8];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
                     break;
                 case 6:
-                    config = 0x01;
-                    config = 0x79;
+                    config = pmcs[9];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
                     break;
@@ -360,22 +375,22 @@ void perf_init_biglittle()
                     pe.type = PERF_TYPE_HARDWARE;
 		    break;
                 case 1:
-		    config = 0x15;//dcache_evic
+		    config = pmcs[10];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
                 case 2:
-		    config = 0x04;//data_rw_cache_access
+		    config = pmcs[11];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 3:
-                    config = 0x1D;//bus cycle
+                    config = pmcs[12];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 4:
-                    config = 0xC1;//no_cache_ext_mem_req
+                    config = pmcs[13];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
@@ -426,32 +441,32 @@ void perf_init_biglittle()
                     pe.type = PERF_TYPE_HARDWARE;
 		    break;
                 case 1:
-		    config = 0x48;//L1D_CACHE_INVAL
+		    config = pmcs[14];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
                 case 2:
-		    config = 0x46;//L1D_CACHE_WB_VICTIM
+		    config = pmcs[15];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 3:
-                    config = 0x16;//L2D_CACHE_ACCESS
+                    config = pmcs[16];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
 		case 4:
-                    config = 0x73;//DP_SPEC
+                    config = pmcs[17];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
 		    break;
                 case 5:
-                    config = 0x01;//L1I_CACHE_REFILL
+                    config = pmcs[18];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
                     break;
                 case 6:
-                    config = 0x47;//L1D_CACHE_WB_CLEAN
+                    config = pmcs[19];
 		    group_fd = perf_cpu[cpu][0].fd;
                     pe.type = PERF_TYPE_RAW;
                     break;
