@@ -7,6 +7,7 @@
 #define START_INDEX_BIG 4
 #define END_INDEX_BIG 7
 
+
 /// Software hardware counters.
 struct PerfSoftwareData
 {
@@ -32,6 +33,7 @@ extern void perf_init_little();
 extern void perf_init_big();
 extern void perf_init_biglittle();
 
+extern void set_pmcs(unsigned int *, int);
 /// Shutdowns the performance counting subsystem.
 extern void perf_shutdown();
 
@@ -50,5 +52,4 @@ extern auto perf_consume_hw(int cpu) -> PerfHardwareData;
 /// A consume operation obtains counters as if they were reset during
 /// the previous consume operation.
 extern auto perf_consume_sw(int cpu) -> PerfSoftwareData;
-
 
