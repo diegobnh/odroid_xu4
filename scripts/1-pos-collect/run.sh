@@ -78,18 +78,9 @@ rm 4b4l 4b4l_1 4b4l_2 4b 4l
 #------------------------------
 #Calculate dataset for 4little
 #------------------------------
-FOLDERS=`ls -d 4l_*`
-for i in $FOLDERS ;
-do  
-    cd $i 
-    #cat consolidated-pmc-little.csv.average | tr "," " " | awk '{$34=""; print}' | tr " " "," >> ../4l.csv
-    cat consolidated-pmc-little.csv.average | tr "," " " | awk '{print}' | tr " " "," >> ../4l.csv
-    cd ..    
-done
-
+cat 4l_*/consolidated-pmc-little.csv.average | awk -F "," '{print}' >> 4l.csv
 cat speedup_4l | tr "," " " | awk  '{print $2}' > to_4b4l
 cat speedup_4l | tr "," " " | awk  '{print $1}' > to_4b
-
 awk '$0=$0",1"' 4l.csv > temp #add 1 última coluna
 paste temp to_4b to_4b4l -d "," > 4l.csv
 rm to_* 
@@ -98,15 +89,7 @@ rm to_*
 #Calculate dataset for 4big
 #--------------------------
 
-FOLDERS=`ls -d 4b_*`
-for i in $FOLDERS ;
-do  
-    cd $i 
-    #cat consolidated-pmc-big.csv.average | tr "," " " | awk '{$57=""; print}' | tr " " "," >> ../4b.csv
-    cat consolidated-pmc-big.csv.average | tr "," " " | awk '{print}' | tr " " "," >> ../4b.csv
-    cd ..    
-done
-
+cat 4b_*/consolidated-pmc-big.csv.average | awk -F "," '{print}' >> 4b.csv
 cat speedup_4b | tr "," " " | awk  '{print $2}' > to_4b4l
 cat speedup_4b | tr "," " " | awk  '{print $1}' > to_4l
 paste 4b.csv to_4l -d "," > temp1
@@ -118,23 +101,8 @@ rm to_*
 #--------------------------
 #Calculate dataset for 4b4l
 #--------------------------
-FOLDERS=`ls -d 4b4l_A15*`
-for i in $FOLDERS ;
-do  
-    cd $i     
-    #cat consolidated-pmc-big.csv.average | tr "," " " | awk '{$57=""; print}' | tr " " "," >> ../average_samples_A15
-    cat consolidated-pmc-big.csv.average | tr "," " " | awk '{print}' | tr " " "," >> ../average_samples_A15
-    cd ..    
-done
-
-FOLDERS=`ls -d 4b4l_A7*`
-for i in $FOLDERS ;
-do  
-    cd $i     
-    #cat consolidated-pmc-little.csv.average | tr "," " " | awk '{$34=""; print}' | tr " " "," >> ../average_samples_A7
-    cat consolidated-pmc-little.csv.average | tr "," " " | awk '{print}' | tr " " "," >> ../average_samples_A7
-    cd ..    
-done
+cat 4b4l_A15_*/consolidated-pmc-big.csv.average | awk -F "," '{print}' >> average_samples_A15
+cat 4b4l_A7_*/consolidated-pmc-little.csv.average | awk -F "," '{print}' >> average_samples_A7
 
 cat speedup_4b4l | tr "," " " | awk '{print $2}' > to_4b
 cat speedup_4b4l | tr "," " " | awk '{print $1}' > to_4l
