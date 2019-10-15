@@ -106,12 +106,8 @@ do
      cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f\n", $1}' >> apps_total_energy.dat 
      cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f\n", $1}' >> apps_total_energy_error.dat 
 done 
-#listar todas as pastas, entrar em cada uma delas e calcular a potência
-#só depos de caclculado que fazemos o cálculo da média
-
 
 }
 
 calculate_power_dynamic_case
-
 
