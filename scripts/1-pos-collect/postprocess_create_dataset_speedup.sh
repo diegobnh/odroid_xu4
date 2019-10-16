@@ -30,7 +30,7 @@ for i in $FOLDERS ;
 do  
     cd $i
     echo "4b4l_A15 Folder:"$i
-    bash ../postprocess_experiment.sh "big"
+    bash ../postprocess_normalize_pmcs.sh "big"
     cat times.txt | tr "." "," | datamash sstdev 1 > temp
     cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' > desv
     cd .. ; 
@@ -42,7 +42,7 @@ for i in $FOLDERS ;
 do  
     cd $i
     echo "4b4l_A7 Folder:"$i
-    bash ../postprocess_experiment.sh "little"       
+    bash ../postprocess_normalize_pmcs.sh "little"       
     cat times.txt | tr "." "," | datamash sstdev 1 > temp
     cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' > desv
     cd .. ; 
