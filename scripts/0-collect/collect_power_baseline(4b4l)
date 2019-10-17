@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -f apps_total_energy *.energy
+rm -f apps_total_energy interval_energy *.energy
 
 APP_COMMANDS=("taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 36" \
               "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/nqueens.gcc.omp-tasks-tied -n 13" \
@@ -17,40 +17,47 @@ APP_COMMANDS=("taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fib.gcc.omp-tas
 
 APP_NAMES=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen" "backprop" "heartwall" "lavaMD" "particlefilter")
 
-for ((j = 0; j < ${#APP_COMMANDS[@]}; j++)); 
-do
-      sudo wattsup -t -s ttyUSB0 watts > $j".energy" & pid_wattsup=$!
-      echo "Pid wattsup:"$pid_wattsup
-      sleep 5
-      start=$(date +"%H:%M:%S")
-      ${APP_COMMANDS[$j]} & pid_app=$! 
-      wait $pid_app
-      end=$(date +"%H:%M:%S")
-      sleep 5
-      var=$(($pid_wattsup +2))
-      sudo kill -9 $var
-      sleep 5
+for ((i = 0; i< 10; i++));
+do 
+        rm -f apps_total_energy
+        for ((j = 0; j < ${#APP_COMMANDS[@]}; j++)); 
+        do
+              sudo wattsup -t -s ttyUSB0 watts > $j".energy" & pid_wattsup=$!
+              echo "Pid wattsup:"$pid_wattsup
+              sleep 5
+              start=$(date +"%H:%M:%S")
+              ${APP_COMMANDS[$j]} & pid_app=$! 
+              wait $pid_app
+              end=$(date +"%H:%M:%S")
+              sleep 5
+              var=$(($pid_wattsup +2))
+              sudo kill -9 $var
+              sleep 5
 
-      echo $start
-      echo $end
-      sudo sed -i 's/\[//g ; s/\]//g' $j".energy"
-      sudo sed -n "/^${start}/,/^${end}/p" $j".energy" > interval_energy
-      sed -i '1d' interval_energy #remove fisrt line, because the calculate begin after 1 second not in the zero time
+              echo $start
+              echo $end
+              sudo sed -i 's/\[//g ; s/\]//g' $j".energy"
+              sudo sed -n "/^${start}/,/^${end}/p" $j".energy" > interval_energy
+              sed -i '1d' interval_energy #remove fisrt line, because the calculate begin after 1 second not in the zero time
 
-      StartDate=$(date -u -d "$start" +"%s")
-      FinalDate=$(date -u -d "$end" +"%s")
-      seconds=$(date -u -d "0 $FinalDate sec - $StartDate sec" +"%H:%M:%S" | awk -F: '{print ($1*3600)+($2*60)+$3}')
+              StartDate=$(date -u -d "$start" +"%s")
+              FinalDate=$(date -u -d "$end" +"%s")
+              seconds=$(date -u -d "0 $FinalDate sec - $StartDate sec" +"%H:%M:%S" | awk -F: '{print ($1*3600)+($2*60)+$3}')
 
 
-      num_lines=$(wc -l interval_energy | awk '{print $1}')
+              num_lines=$(wc -l interval_energy | awk '{print $1}')
 
-      if [ $seconds -ne $num_lines ]; then
-          echo -n " App:"${APP_NAMES[$j]}
-          echo -n " Exec_time:"$seconds
-          echo " Num_lines_power:"$num_lines
-      fi 
+              if [ $seconds -ne $num_lines ]; then
+                  echo -n " App:"${APP_NAMES[$j]}
+                  echo -n " Exec_time:"$seconds
+                  echo " Num_lines_power:"$num_lines
+              fi 
 
-      total=$(cat interval_energy | tr " " "\t" | datamash sum 2)
-      echo ${APP_NAMES[$j]}","$total >> "apps_total_energy" 
+              total=$(cat interval_energy | tr " " "\t" | datamash sum 2)
+              echo ${APP_NAMES[$j]}","$total >> "apps_total_energy" 
+        done
+        sleep 5
+        tar -cf $i".tar" *.energy apps_total_energy
 done
 
+rm -f apps_total_energy interval_energy *.energy
