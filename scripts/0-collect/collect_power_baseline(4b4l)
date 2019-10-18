@@ -1,4 +1,4 @@
-#!/bin/bash
+  #!/bin/bash
 
 rm -f apps_total_energy interval_energy *.energy
 
@@ -18,11 +18,10 @@ APP_COMMANDS=("taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fib.gcc.omp-tas
 APP_NAMES=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen" "backprop" "heartwall" "lavaMD" "particlefilter")
 
 for ((i = 0; i< 10; i++));
-do 
-        rm -f apps_total_energy
+do
         for ((j = 0; j < ${#APP_COMMANDS[@]}; j++)); 
         do
-              sudo wattsup -t -s ttyUSB0 watts > $j".energy" & pid_wattsup=$!
+              sudo wattsup -t -s ttyUSB0 watts > ${APP_NAMES[$j]}".energy" & pid_wattsup=$!
               echo "Pid wattsup:"$pid_wattsup
               sleep 5
               start=$(date +"%H:%M:%S")
@@ -48,16 +47,16 @@ do
               num_lines=$(wc -l interval_energy | awk '{print $1}')
 
               if [ $seconds -ne $num_lines ]; then
-                  echo -n " App:"${APP_NAMES[$j]}
-                  echo -n " Exec_time:"$seconds
-                  echo " Num_lines_power:"$num_lines
+                  echo -n " App:"${APP_NAMES[$j]} >> error
+                  echo -n " Exec_time:"$seconds >> error
+                  echo " Num_lines_power:"$num_lines >> error
               fi 
 
               total=$(cat interval_energy | tr " " "\t" | datamash sum 2)
               echo ${APP_NAMES[$j]}","$total >> "apps_total_energy" 
         done
-        sleep 5
-        tar -cf $i".tar" *.energy apps_total_energy
+        tar -cf $i".tar" *.energy apps_total_energy error
+        rm -f apps_total_energy error *.energy
 done
 
-rm -f apps_total_energy interval_energy *.energy
+sudo shutdown -h now
