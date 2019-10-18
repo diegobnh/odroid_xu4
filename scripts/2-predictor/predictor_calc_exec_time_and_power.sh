@@ -59,6 +59,7 @@ do
    #EXECUTION TIME
    mean=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 4 | tr "," "."| awk '{printf "%.2f", $1}')
    stdev=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 4 | tr "," "."| awk '{printf "%.2f", $1}')
+   root_squared=$(echo "sqrt ( 10 )" | bc -l)
    aux=$(echo $stdev/$root_squared)
    interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
  
@@ -69,6 +70,7 @@ do
    #NUMBER OF SWITCH
    mean=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 5 | tr "," "."| awk '{printf "%.2f", $1}')
    stdev=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 5 | tr "," "."| awk '{printf "%.2f", $1}')
+   root_squared=$(echo "sqrt ( 10 )" | bc -l)
    aux=$(echo $stdev/$root_squared)
    interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
  
@@ -130,6 +132,35 @@ do
      cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> apps_total_energy.dat 
      cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> apps_total_energy_error.dat 
 done 
+
+}
+
+
+calc_edp_dynamic_case()
+{
+for ((k = 0; k< ${#APPS[@]}; k++));
+do
+     cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "," "."| awk '{printf "%.2f\n", $4}' > exec_times
+
+     start_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $2}')
+     end_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $3}')
+     sudo sed -n '/^\'$start_time'/,/^\'$end_time'/p' ${APPS[$k]}".energy" > interval_energy
+     sed -i '1d' interval_energy #remove fisrt line, because the calculate begin after 1 second not in the zero time
+     cat interval_energy | tr " " "\t" | tr "." "," | datamash sum 2 | tr "," "." > power
+
+     paste exec_times power | awk '{printf "%.2f\n", $1*$2}' > edps
+
+
+     mean=$(cat edps |  tr "." "," | datamash mean 1 | tr "," "." | awk '{printf "%.2f", $1}')
+     stdev=$(cat edps |  tr "." "," | datamash sstdev 1 | tr "," "."| awk '{printf "%.2f", $1}')
+     root_squared=$(echo "sqrt ( 10 )" | bc -l)
+     aux=$(echo $stdev/$root_squared)
+     interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
+
+     echo -n $mean"," >> model_edp.dat
+     echo -n $interval"," >> model_edp_error.dat
+
+done
 
 }
 
