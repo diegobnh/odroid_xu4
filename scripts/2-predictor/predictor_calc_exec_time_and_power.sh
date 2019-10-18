@@ -23,8 +23,18 @@ do
    echo -n $interval"," >> default_exec_time_error.dat
 done
 
+#output is the same as below
+#mean.dat
+#88.53,89.34,31.79,65.66,104.89,23.49,54.33,29.33,54.66,28.53,62.61,51.92,
+#error_bar.dat
+#11.19,3.41,0.22,9.04,0.61,0.61,1.06,1.04,0.47,0.31,0.08,1.61,
 }
 
+
+calculate_power_default_case ()
+{
+#each folder has file with all aplications and its total power
+}
 
 #In this function i assumed each execution is in different folder. Besides that, each file has four column: 1º app_name, 2º timestamp_start, 3º timestamp_stop, 4º exec_time, 5º num_switch
 
