@@ -34,6 +34,20 @@ done
 calculate_power_default_case ()
 {
 #each folder has file with all aplications and its total power
+for ((k = 0; k< ${#APPS[@]}; k++));
+do   
+   #DEFAULT CASE- 4b4l
+   mean=$(cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f", $1}')
+   stdev=$(cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "."| awk '{printf "%.2f", $1}')
+   root_squared=$(echo "sqrt ( 10 )" | bc -l)
+   aux=$(echo $stdev/$root_squared)
+   interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
+
+   echo -n $mean"," >> default_exec_time.dat
+   #echo $stdev >> default_stdev
+   echo -n $interval"," >> default_exec_time_error.dat
+done
+
 }
 
 #In this function i assumed each execution is in different folder. Besides that, each file has four column: 1º app_name, 2º timestamp_start, 3º timestamp_stop, 4º exec_time, 5º num_switch
