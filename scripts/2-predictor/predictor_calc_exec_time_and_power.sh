@@ -127,8 +127,8 @@ done
 
 for ((k = 0; k< ${#APPS[@]}; k++));
 do
-     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f\n", $1}' >> apps_total_energy.dat 
-     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f\n", $1}' >> apps_total_energy_error.dat 
+     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f", $1}' >> apps_total_energy.dat 
+     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f", $1}' >> apps_total_energy_error.dat 
 done 
 
 }
