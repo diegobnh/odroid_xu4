@@ -126,15 +126,14 @@ do
      cd ..;
 done
 
-
 for ((k = 0; k< ${#APPS[@]}; k++));
 do
-     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> apps_total_energy.dat 
-     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> apps_total_energy_error.dat 
+     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> model_energy.dat 
+     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> model_energy_error.dat 
 done 
 
+rm -f apps_total_energy
 }
-
 
 calc_edp_dynamic_case()
 {
@@ -148,7 +147,6 @@ do
      for i in $folders;
      do        
         cd $i;     
-             echo "Entrando folder."$i  
              start_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $2}')
              end_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $3}')
              sudo sed -n '/^\'$start_time'/,/^\'$end_time'/p' ${APPS[$k]}".energy" > interval_energy
@@ -157,8 +155,7 @@ do
         cd ..
      done
      paste exec_times powers | awk '{printf "%.2f\n", $1*$2}' > edps
-
-
+    
      mean=$(cat edps |  tr "." "," | datamash mean 1 | tr "," "." | awk '{printf "%.2f", $1}')
      stdev=$(cat edps |  tr "." "," | datamash sstdev 1 | tr "," "."| awk '{printf "%.2f", $1}')
      root_squared=$(echo "sqrt ( 10 )" | bc -l)
@@ -167,12 +164,13 @@ do
 
      echo -n $mean"," >> model_edp.dat
      echo -n $interval"," >> model_edp_error.dat
-
-     read -p "Fim de uma aplicacao"
-
+          
 done
+
+rm -f powers edps exec_times
 
 }
 
+calculate_exec_time_dynamic_case
 calculate_power_dynamic_case
-
+calc_edp_dynamic_case
