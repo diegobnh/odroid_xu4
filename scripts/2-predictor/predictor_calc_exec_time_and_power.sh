@@ -138,17 +138,25 @@ done
 
 calc_edp_dynamic_case()
 {
+
 for ((k = 0; k< ${#APPS[@]}; k++));
 do
      cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "," "."| awk '{printf "%.2f\n", $4}' > exec_times
 
-     start_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $2}')
-     end_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $3}')
-     sudo sed -n '/^\'$start_time'/,/^\'$end_time'/p' ${APPS[$k]}".energy" > interval_energy
-     sed -i '1d' interval_energy #remove fisrt line, because the calculate begin after 1 second not in the zero time
-     cat interval_energy | tr " " "\t" | tr "." "," | datamash sum 2 | tr "," "." > power
-
-     paste exec_times power | awk '{printf "%.2f\n", $1*$2}' > edps
+     rm -f powers
+     folders=$(ls -d */)
+     for i in $folders;
+     do        
+        cd $i;     
+             echo "Entrando folder."$i  
+             start_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $2}')
+             end_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $3}')
+             sudo sed -n '/^\'$start_time'/,/^\'$end_time'/p' ${APPS[$k]}".energy" > interval_energy
+             sed -i '1d' interval_energy #remove fisrt line, because the calculate begin after 1 second not in the zero time
+             cat interval_energy | tr " " "\t" | tr "." "," | datamash sum 2 | tr "," "." >> ../powers
+        cd ..
+     done
+     paste exec_times powers | awk '{printf "%.2f\n", $1*$2}' > edps
 
 
      mean=$(cat edps |  tr "." "," | datamash mean 1 | tr "," "." | awk '{printf "%.2f", $1}')
@@ -159,6 +167,8 @@ do
 
      echo -n $mean"," >> model_edp.dat
      echo -n $interval"," >> model_edp_error.dat
+
+     read -p "Fim de uma aplicacao"
 
 done
 
