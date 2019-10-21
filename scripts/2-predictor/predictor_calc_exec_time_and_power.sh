@@ -43,9 +43,9 @@ do
    aux=$(echo $stdev/$root_squared)
    interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
 
-   echo -n $mean"," >> default_exec_time.dat
+   echo -n $mean"," >> default_power.dat
    #echo $stdev >> default_stdev
-   echo -n $interval"," >> default_exec_time_error.dat
+   echo -n $interval"," >> default_power_error.dat
 done
 
 }
@@ -128,8 +128,8 @@ done
 
 for ((k = 0; k< ${#APPS[@]}; k++));
 do
-     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> model_energy.dat 
-     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> model_energy_error.dat 
+     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> model_power.dat 
+     cat */apps_total_energy | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 2 | tr "," "." | awk '{printf "%.2f,", $1}' >> model_power_error.dat 
 done 
 
 rm -f apps_total_energy
