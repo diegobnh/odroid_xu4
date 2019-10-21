@@ -36,7 +36,9 @@ static State current_state;
 static int flag_update_schedule;
 static int save_application_pid;
 static void update_scheduler_to_serial_region();
-static int change_config = 0;
+static int wattsup_fd = -1;
+static int wattsup_pid = -1;
+static int number_switches = 0;
 static double sum_time=0;
 static unsigned int  count_time=0;
 
@@ -121,10 +123,11 @@ void get_cpu_usage(double *cpu_usage)
 void get_input(char *line) {        
     char *temp = NULL;
     
+
     temp = strtok(line, " ");
     while (temp != NULL)
     {
-        *next++ = temp; //this is global variable
+        *next++ = temp;
         temp = strtok(NULL, " ");
     }
     *next = NULL;
@@ -226,6 +229,7 @@ static void cleanup()
         collect_stream = 0;
     }
 
+
 }
 
 static bool create_logging_file()
@@ -259,6 +263,36 @@ static bool create_time_file(uint64_t time_ms)
     fprintf(time_stream, "%" PRIu64, time_ms);
     fprintf(time_stream, "\n");
     return true;
+}
+
+static bool spawn_wattsup(void)
+{
+    int out = open("out_energy.txt", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+
+    int pid = fork();
+    if(pid == -1)
+    {
+        perror("scheduler: failed to fork scheduler");
+        return false;
+    }
+    else if(pid == 0)
+    {
+        dup2(out,1);
+
+        char *args[] = {(char *)"sudo", "/usr/bin/./wattsup", "-t", "-s", "ttyUSB0", "watts", NULL};
+        execvp(args[0],args);
+        perror("scheduler: execvp failed on wattsup !\n");
+        return false;
+
+    }
+    else
+    {
+        ::wattsup_fd = out;
+        ::wattsup_pid = pid;
+        //fprintf(stderr, "pid watssup:%d\n", wattsup_pid);
+        return true;
+    }
+
 }
 
 static bool spawn_predictor(const char* command)
@@ -501,7 +535,7 @@ static void update_scheduler()
         }
 
         current_state = next_state;
-        ::change_config++;
+        ::number_switches++;
     }
 }
 
@@ -511,6 +545,10 @@ int main(int argc, char* argv[])
     unsigned int pmcs_values[TOTAL_DIFFERENT_PMCS];
     int total_apps=12;
     unsigned int value;
+
+    time_t rawtime;
+    struct tm *info;
+
 
     char commands[][256]={"/home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 36",
                           "/home/odroid/workloads/bots/bin/nqueens.gcc.omp-tasks-tied -n 13",
@@ -525,7 +563,7 @@ int main(int argc, char* argv[])
                           "/home/odroid/workloads/rodinia/openmp/lavaMD/lavaMD -boxes1d 20",
                           "/home/odroid/workloads/rodinia/openmp/particlefilter/./particle_filter -x 512 -y 512 -z 40 -np 40000"};
 
-   
+
    char apps_name[][30]={"fib",
                          "nqueens",
                          "health",
@@ -566,7 +604,15 @@ int main(int argc, char* argv[])
 
     for(int i = 0; i < total_apps; ++i)
     {
-        ::change_config=0;
+        spawn_wattsup();
+        sleep(5);
+
+
+        char time_start[256], time_end[256];
+        time(&rawtime);
+        info = localtime(&rawtime);
+        sprintf(time_start, "[%02d:%02d:%02d]",info->tm_hour, info->tm_min, info->tm_sec);
+
         if(!spawn_application(commands[i]))
         {
             fprintf(stderr,"Spawn application\n");
@@ -577,7 +623,7 @@ int main(int argc, char* argv[])
 
         perf_init_biglittle();
 
-        char buf[50];
+        char buf[100];
 
         while(::application_pid != -1)
         {
@@ -602,7 +648,11 @@ int main(int argc, char* argv[])
                 if(::application_pid == -1) // end of episode
                 {
                      exec_time = to_millis(get_time() - ::application_start_time);
-                     fprintf(stderr, "%s,%lf,%d\n", apps_name[i],exec_time*0.001,::change_config);
+                     time(&rawtime);
+                     info = localtime(&rawtime);
+                     sprintf(time_end, "[%02d:%02d:%02d]",info->tm_hour, info->tm_min, info->tm_sec);
+
+                     fprintf(stderr, "%s,%s,%s,%lf,%d\n", apps_name[i],time_start,time_end,exec_time*0.001,::number_switches);
                      //create_time_file(exec_time);
                      send_to_scheduler("0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1");
                      //fprintf(stderr, "Average time spend model:%lf\n",sum_time/count_time); 
@@ -615,11 +665,25 @@ int main(int argc, char* argv[])
         usleep(5000000);
         perf_shutdown();
 
-        //sprintf(buf, "mv output_predictor.txt %s", apps_name[i]);
-        //system(buf);
+
+        if(wattsup_pid !=-1)
+        {
+           close(wattsup_fd); 
+           int ret = kill(wattsup_pid+1, SIGKILL);//kill the wattsup power
+           if(ret == -1)
+              perror("Failure to kill wattsup\n");
+           sleep(3);
+           wattsup_pid = -1;
+           wattsup_fd = -1;
+           char cmd[256];
+           sprintf(cmd, "mv out_energy.txt %s.energy", apps_name[i]);
+           ret = system(cmd);
+        }
+
+
     }
     cleanup();
-    usleep(200000);//200 miliseconds
-  
+    usleep(5000000);//miliseconds
+
     return 0;
 }
