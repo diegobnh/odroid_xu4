@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 if [ $1 = "little" ]; then
 	OUTPUT_FILE_NAME="consolidated-pmc-little.csv"
 
@@ -25,7 +24,7 @@ if [ $1 = "little" ]; then
 	   #remove the time column and the columns software counters and utilization
 	   cat temp2 | tr "," " " | awk '{$1=$7=$8=$9=$10=""; print}' > temp3 #Toda vez que você omite uma impressão ele coloca espaços em branco que removem o padrão do arquiv. Por isso precisa usar printf depois
 
-	   #calculates pmcs normalizing by instructions
+	   #calculates pmcs normalizing by CYCLES
 	   cat temp3 | awk '{printf "%.6f,%.6f,%.6f,%.6f\n", $2/$1, $3/$1, $4/$1, $5/$1}' > $pmcs".post_process"	
            sed -i '/-nan/d' $pmcs".post_process"
            sed -i '/nan/d' $pmcs".post_process"  
@@ -56,7 +55,6 @@ if [ $1 = "little" ]; then
         paste *.post_process -d "," > $OUTPUT_FILE_NAME
 
         rm *.lines
-
         
         #remove coluns in range 34-36 -> last 3 columns are null
         cut -d, -f34-36 --complement $OUTPUT_FILE_NAME > temp
@@ -88,7 +86,7 @@ elif [ $1 = "big" ]; then
 	   #remove the time column and the columns 9,10,11,12 that means cluster utilization and software counters
 	   cat temp2 | tr "," " " | awk '{$1=$9=$10=$11=$12=""; print}' > temp3
 
-	   #calculates pmcs normalizing by instructions
+	   #calculates pmcs normalizing by CYCLES
 	   cat temp3 | awk '{printf "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", $2/$1, $3/$1, $4/$1, $5/$1, $6/$1, $7/$1}' > $pmcs".post_process"
            #division 0 per 0 result values -nan. I just remove theses lines. Sometimes cycles and others counters are zero
            sed -i '/-nan/d' *.post_process
@@ -100,9 +98,7 @@ elif [ $1 = "big" ]; then
 	   rm temp*
 
 	done
-
        
-
 	NUM_LINHAS_COMUM=1000000
 	FILES=$(ls *.lines)      
 	for i in $FILES;
