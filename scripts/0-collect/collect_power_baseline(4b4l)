@@ -17,7 +17,7 @@ APP_COMMANDS=("taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fib.gcc.omp-tas
 
 APP_NAMES=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen" "backprop" "heartwall" "lavaMD" "particlefilter")
 
-for ((i = 0; i< 10; i++));
+for ((i = 0; i<= 9; i++));
 do
         for ((j = 0; j < ${#APP_COMMANDS[@]}; j++)); 
         do
@@ -35,8 +35,8 @@ do
 
               echo $start
               echo $end
-              sudo sed -i 's/\[//g ; s/\]//g' $j".energy"
-              sudo sed -n "/^${start}/,/^${end}/p" $j".energy" > interval_energy
+              sudo sed -i 's/\[//g ; s/\]//g' ${APP_NAMES[$j]}".energy"
+              sudo sed -n "/^${start}/,/^${end}/p" ${APP_NAMES[$j]}".energy" > interval_energy
               sed -i '1d' interval_energy #remove fisrt line, because the calculate begin after 1 second not in the zero time
 
               StartDate=$(date -u -d "$start" +"%s")
@@ -53,10 +53,8 @@ do
               fi 
 
               total=$(cat interval_energy | tr " " "\t" | datamash sum 2)
-              echo ${APP_NAMES[$j]}","$total >> "apps_total_energy" 
+              echo ${APP_NAMES[$j]}","$start","$end","$total >> "Exec_time_and_power.txt" 
         done
-        tar -cf $i".tar" *.energy apps_total_energy error
-        rm -f apps_total_energy error *.energy
+        tar -cf $i".tar" *.energy Exec_time_and_power.txt error
+        rm -f Exec_time_and_power.txt error interval_energy *.energy
 done
-
-sudo shutdown -h now
