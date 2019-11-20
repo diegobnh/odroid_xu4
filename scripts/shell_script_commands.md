@@ -48,6 +48,10 @@ cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' >
 
 cat temp2 | tr "," " " | awk '{$1=$9=$10=$11=$12=""; print}' > temp3
 
+- contando número de colunas de um arquivo
+
+cat consolidated-pmc-little.csv | awk -F',' '{print NF; exit}'
+
 **Files**
 - percorrer todos os files com um padrão
 
