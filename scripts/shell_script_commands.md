@@ -17,3 +17,16 @@ result=$(echo "scale=1; $current / $NUM_LINHAS_COMUM" | bc)
 - arredondamento
 
 tics=`/usr/bin/printf "%.0f" $result` #Round to up or down
+
+**Operações de impressão/remoção linhas**
+
+- remoção de todas as linhas superiores a um valor X
+
+sed -n "1,$NUM_LINHAS_COMUM p" pmcs.tics > aux
+
+- remoção das primeiras e das últimas n linhas
+
+num_lines=`cat $file |wc -l`
+x=$((num_lines-2)) 
+sed -e "$x,\$d" $file > temp1
+sed -e "1,2d" temp1 > temp2
