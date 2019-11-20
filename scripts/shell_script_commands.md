@@ -46,21 +46,6 @@ for num in $(seq 1 $num_columns);
 do  
 done
 
-**awk**
-
-- usando variáveis
-
-cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' > desv
-
-
-- não imprimir determinadas colunas
-
-cat temp2 | tr "," " " | awk '{$1=$9=$10=$11=$12=""; print}' > temp3
-
-- contando número de colunas de um arquivo
-
-cat consolidated-pmc-little.csv | awk -F',' '{print NF; exit}'
-
 **Files**
 - percorrer todos os files com um padrão
 
@@ -108,3 +93,23 @@ do
       done
 done
 
+**awk**
+
+- usando variáveis
+
+cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' > desv
+
+
+- não imprimir determinadas colunas
+
+cat temp2 | tr "," " " | awk '{$1=$9=$10=$11=$12=""; print}' > temp3
+
+- contando número de colunas de um arquivo
+
+cat consolidated-pmc-little.csv | awk -F',' '{print NF; exit}'
+
+**paste**
+
+- usando a extensão do arquivo ordenado corretamente
+
+paste -d, $(ls -v *.diego) > out2
