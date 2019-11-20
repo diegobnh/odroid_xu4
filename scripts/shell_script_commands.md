@@ -37,6 +37,15 @@ sed -e "1,2d" temp1 > temp2
 
 cut -d, -f34-36 --complement $OUTPUT_FILE_NAME > temp
 
+**Loops**
+
+- usando uma variable como contorle do laço
+
+num_coluns=$(cat consolidate* | awk -F',' '{print NF; exit}')
+for num in $(seq 1 $num_columns);     
+do  
+done
+
 **awk**
 
 - usando variáveis
