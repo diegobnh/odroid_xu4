@@ -37,6 +37,10 @@ sed -e "1,2d" temp1 > temp2
 
 cut -d, -f34-36 --complement $OUTPUT_FILE_NAME > temp
 
+- remover as últimas 3 colunas sem saber a quantidade de colunas
+
+cat columns_target | awk -F, 'NF-=3'
+
 **Loops**
 
 - usando uma variable como contorle do laço
