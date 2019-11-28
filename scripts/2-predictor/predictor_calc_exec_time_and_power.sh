@@ -31,7 +31,7 @@ do
    mean=$(cat calculate_times | tr "." "," | datamash mean 1 | tr "," "." | awk '{printf "%.2f", $1}')
    stdev=$(cat calculate_times | tr "." "," | datamash sstdev 1 | tr "," "."| awk '{printf "%.2f", $1}')
    root_squared=$(echo "sqrt ( 10 )" | bc -l)
-   aux=$(echo $stdev/$root_squared)
+   aux=`echo $stdev / $root_squared | bc -l`
    interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
 
    echo -n $mean"," >> default_exec_time.dat
@@ -53,7 +53,7 @@ do
    mean=$(cat */Exec_time_and_power.txt | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 4 | tr "," "." | awk '{printf "%.2f", $1}')
    stdev=$(cat */Exec_time_and_power.txt | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 4 | tr "," "."| awk '{printf "%.2f", $1}')
    root_squared=$(echo "sqrt ( 10 )" | bc -l)
-   aux=$(echo $stdev/$root_squared)
+   aux=`echo $stdev / $root_squared | bc -l`
    interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
 
    echo -n $mean"," >> default_power.dat
@@ -70,7 +70,7 @@ do
    mean=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 4 | tr "," "."| awk '{printf "%.2f", $1}')
    stdev=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 4 | tr "," "."| awk '{printf "%.2f", $1}')
    root_squared=$(echo "sqrt ( 10 )" | bc -l)
-   aux=$(echo $stdev/$root_squared)
+   aux=`echo $stdev / $root_squared | bc -l`
    interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
  
    echo -n $mean"," >> model_exec_time.dat
@@ -81,7 +81,7 @@ do
    mean=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash mean 5 | tr "," "."| awk '{printf "%.2f", $1}')
    stdev=$(cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "." "," | datamash sstdev 5 | tr "," "."| awk '{printf "%.2f", $1}')
    root_squared=$(echo "sqrt ( 10 )" | bc -l)
-   aux=$(echo $stdev/$root_squared)
+   aux=`echo $stdev / $root_squared | bc -l`
    interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
  
    echo -n $mean"," >> model_number_switch.dat
@@ -169,7 +169,7 @@ do
      mean=$(cat edps |  tr "." "," | datamash mean 1 | tr "," "." | awk '{printf "%.2f", $1}')
      stdev=$(cat edps |  tr "." "," | datamash sstdev 1 | tr "," "."| awk '{printf "%.2f", $1}')
      root_squared=$(echo "sqrt ( 10 )" | bc -l)
-     aux=$(echo $stdev/$root_squared)
+     aux=`echo $stdev / $root_squared | bc -l`
      interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
 
      echo -n $mean"," >> model_edp.dat
