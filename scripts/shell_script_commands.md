@@ -14,6 +14,10 @@ cat $file | datamash -s -g 1 mean 2-6 (agrupar os timestamps da coluna 1 e calcu
 
 result=$(echo "scale=1; $current / $NUM_LINHAS_COMUM" | bc)
 
+- diviso entre duas variáveis
+
+aux=`echo $stdev / $root_squared | bc -l`
+
 - arredondamento
 
 tics=`/usr/bin/printf "%.0f" $result` #Round to up or down
