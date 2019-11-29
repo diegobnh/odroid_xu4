@@ -8,9 +8,6 @@
 #Alterado para a proposta de multioutput regressor.Por isso, apenas um arquivo para cada configuração será gerado.
 #A saida será todos os performance counter como média e três colunas ao final que se refere ao speedup no 4l, 4b, 4b4l. 
 
-
-
-
 rm -f -- *.csv
 #remove files existentes
 FOLDERS=`ls -d */`
