@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#This script can be executed in any folder!!
+
 rm -f Exec_time_and_power.txt error interval_energy *.energy 
 
 APP_COMMANDS=("taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 32" \
