@@ -1,21 +1,23 @@
-  #!/bin/bash
+#!/bin/bash
 
-rm -f apps_total_energy interval_energy *.energy
+rm -f Exec_time_and_power.txt error interval_energy *.energy 
 
-APP_COMMANDS=("taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 36" \
-              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/nqueens.gcc.omp-tasks-tied -n 13" \
+APP_COMMANDS=("taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fib.gcc.omp-tasks-tied -o 0 -n 32" \
+              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/nqueens.gcc.omp-tasks-tied -n 12" \
               "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/health.gcc.omp-tasks-tied -o 0 -f /home/odroid/workloads/bots/inputs/health/medium.input" \
-              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/floorplan.gcc.omp-tasks-tied -o 0 -f /home/odroid/workloads/bots/inputs/floorplan/input.20" \
-              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fft.gcc.omp-tasks-tied -o 0 -n 10000000" \
+              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/floorplan.gcc.omp-tasks-tied -o 0 -f /home/odroid/workloads/bots/inputs/floorplan/input.15" \
+              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/fft.gcc.omp-tasks-tied -o 0 -n 1000000" \
               "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/sort.gcc.omp-tasks-tied -o 0 -n 100000000" \
-              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/sparselu.gcc.for-omp-tasks-tied -o 0 -n 100 -m 100" \
+              "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/sparselu.gcc.for-omp-tasks-tied -o 0 -n 75 -m 75" \
               "taskset -a -c 0-7 /home/odroid/workloads/bots/bin/strassen.gcc.omp-tasks-tied -o 0 -n 4096" \
-              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/backprop/backprop 10000000" \
-              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/heartwall/heartwall /home/odroid/workloads/rodinia/data/heartwall/test.avi.part00 50" \
-              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/lavaMD/lavaMD -boxes1d 20" \
-              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/particlefilter/./particle_filter -x 512 -y 512 -z 40 -np 40000")
+              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/backprop/backprop 2000000" \
+              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/heartwall/heartwall /home/odroid/workloads/rodinia/data/heartwall/test.avi.part00 25" \
+              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/lavaMD/lavaMD -boxes1d 10" \
+              "taskset -a -c 0-7 /home/odroid/workloads/rodinia/openmp/particlefilter/./particle_filter -x 256 -y 256 -z 20 -np 20000")
 
 APP_NAMES=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen" "backprop" "heartwall" "lavaMD" "particlefilter")
+
+
 
 for ((i = 0; i<= 9; i++));
 do
@@ -58,3 +60,4 @@ do
         tar -cf $i".tar" *.energy Exec_time_and_power.txt error
         rm -f Exec_time_and_power.txt error interval_energy *.energy
 done
+
