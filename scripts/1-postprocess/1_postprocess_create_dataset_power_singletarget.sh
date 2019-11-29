@@ -391,3 +391,5 @@ sed -i -n "1,$NUM_LINHAS_COMUM p" *.txt
 
 paste Features_A7.txt Features_A15.txt average_energy.txt -d "" > 4b4l.csv
 rm -f Energy_* *.lines Features* average* all_energy
+
+./2_postprocess_create_dataset_power_multitarget.sh
