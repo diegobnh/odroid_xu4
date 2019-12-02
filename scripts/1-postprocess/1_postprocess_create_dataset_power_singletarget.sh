@@ -250,11 +250,11 @@ create_dataset ()
 
          #IF YOU WANT TO NORMALIZE, COMMENT ALL 5 INSTRUCTIONS BELOW
          #This line will collect all cycles for calculate the average
-         cat $OUTPUT_FILE_NAME | awk '{printf "%.6f\n", ($1+$5+$11+$16+$21+$26+$31+$36+$41)/9}' > cycles_avg
+         cat $OUTPUT_FILE_NAME | awk '{printf "%.6f\n", ($1+$5+$11+$16+$21+$26+$31+$36+$41)/9}' > cycles.avg
          #Here we removed all cycles 
          cut -d, -f1,5,11,16,21,26,31,36,41 --complement $OUTPUT_FILE_NAME > temp
          mv temp $OUTPUT_FILE_NAME
-         paste cycles_avg $OUTPUT_FILE_NAME -d "," > temp
+         paste cycles.avg $OUTPUT_FILE_NAME -d "," > temp
          mv temp $OUTPUT_FILE_NAME
 
          #remove the first two lines and the last two lines
@@ -285,10 +285,10 @@ create_dataset ()
          paste *.dat  energy.avg -d "," > $OUTPUT_FILE_NAME
          rm *.dat
 
-         cat $OUTPUT_FILE_NAME | awk '{printf "%.6f\n", ($1+$5+$11+$16+$21+$26+$31+$36+$41+$46)/10}' > cycles_avg
+         cat $OUTPUT_FILE_NAME | awk '{printf "%.6f\n", ($1+$5+$11+$16+$21+$26+$31+$36+$41+$46)/10}' > cycles.avg
          cut -d, -f1,5,11,16,21,26,31,36,41,49 --complement $OUTPUT_FILE_NAME > temp
          mv temp $OUTPUT_FILE_NAME
-         paste cycles_avg $OUTPUT_FILE_NAME -d "," > temp
+         paste cycles.avg $OUTPUT_FILE_NAME -d "," > temp
          mv temp $OUTPUT_FILE_NAME
 
          #remove the first two lines and the last two lines
