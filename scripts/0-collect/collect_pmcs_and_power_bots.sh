@@ -11,7 +11,7 @@ done
 
 make
 
-rm -f -- *.csv
+rm -f -- *.csv *.energy
 
 SUIT_NAME="4l_bots_"
 
