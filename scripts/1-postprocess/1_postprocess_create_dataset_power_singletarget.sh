@@ -27,6 +27,26 @@ plt.savefig('plot.png')
 
 '
 
+plot_watts_per_app () {
+   gather_energy_measurements
+
+   FOLDERS=`ls -d 4l_* 4b4l_A7*`
+   for i in $FOLDERS ;
+   do
+       cd $i;          
+       #python3 ../plot_energy.py 9      
+       cd ..;
+   done
+   
+   FOLDERS=`ls -d 4b_* 4b4l_A15*`
+   for i in $FOLDERS ;
+   do
+       cd $i;          
+       #python3 ../plot_energy.py 9      
+       cd ..;
+   done
+}
+
 restart_script ()
 {
     rm -f *.csv 
@@ -58,23 +78,31 @@ gather_energy_measurements(){
    for i in $FOLDERS ;
    do
        cd $i;     
-       count=0
        rm -f *.dat
-       for f in *.energy; do               
-            cat $f | awk '{print $2}' > $count".dat"
-            count=$(($count + 1))         
+       for f in *.energy; do  
+            name=$(echo "$f" | cut -f 1 -d '.')                        
+            cat $f | awk '{print $2}' > $name".dat"                     
        done
    
-       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1)       
-       AVERAGE_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash mean 1)              
-       DIFF=$(echo "$AVERAGE_LINES $MIN_LINES" | awk '{print $1-$2}')
+       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1) 
+       MAX_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash max 1) 
+       DIFF=$(echo "$MAX_LINES $MIN_LINES" | awk '{print $1-$2}')
 
+       flag=0
        if [ $DIFF -gt 10 ] 
        then
-             echo "You need to collect energy again to "$i "(Min_lines "$MIN_LINES "Average_lines "$AVERAGE_LINES")"
+             flag=1
+             echo "You need to collect energy again to folder " $i
+             echo "But you just need to get again outliers files, not all"
+             wc -l *.dat
        fi
-       sed -i -n "1,$MIN_LINES p" *.dat
-    
+
+       if [ $flag -eq 1 ]
+       then
+           exit 1
+       fi
+       
+       sed -i -n "1,$MIN_LINES p" *.dat    
        paste *.dat -d ',' > energy_all.postprocess
        
        #python3 ../plot_energy.py 10  #10 total performance counter
@@ -86,23 +114,31 @@ gather_energy_measurements(){
    for i in $FOLDERS ;
    do
        cd $i;     
-       count=1
        rm -f *.dat
-       for f in *.energy; do               
-            cat $f | awk '{print $2}' > $count".dat"
-            count=$(($count + 1))         
+       for f in *.energy; do  
+            name=$(echo "$f" | cut -f 1 -d '.')                        
+            cat $f | awk '{print $2}' > $name".dat"                     
        done
-      
-       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1)       
-       AVERAGE_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash mean 1)              
-       DIFF=$(echo "$AVERAGE_LINES $MIN_LINES" | awk '{print $1-$2}')
+   
+       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1) 
+       MAX_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash max 1) 
+       DIFF=$(echo "$MAX_LINES $MIN_LINES" | awk '{print $1-$2}')
 
+       flag=0
        if [ $DIFF -gt 10 ] 
        then
-             echo "You need to collect energy again to "$i "(Min_lines "$MIN_LINES "Average_lines "$AVERAGE_LINES")"
+             flag=1
+             echo "You need to collect energy again to folder " $i
+             echo "But you just need to get again outliers files, not all"
+             wc -l *.dat
        fi
-       sed -i -n "1,$MIN_LINES p" *.dat
-    
+
+       if [ $flag -eq 1 ]
+       then
+           exit 1
+       fi
+       
+       sed -i -n "1,$MIN_LINES p" *.dat    
        paste *.dat -d ',' > energy_all.postprocess
        
        #python3 ../plot_energy.py 9
@@ -111,47 +147,8 @@ gather_energy_measurements(){
    done
 }
 
-plot_watts_per_app () {
-   gather_energy_measurements
 
-   FOLDERS=`ls -d 4l_* 4b4l_A7*`
-   for i in $FOLDERS ;
-   do
-       cd $i;          
-       #python3 ../plot_energy.py 9      
-       cd ..;
-   done
-   
-   FOLDERS=`ls -d 4b_* 4b4l_A15*`
-   for i in $FOLDERS ;
-   do
-       cd $i;          
-       #python3 ../plot_energy.py 9      
-       cd ..;
-   done
-}
 
-check_stdev_energy_files ()
-{
-    #This function detect possible error from wattsup. It happens when there is a huge difference in number of lines  from files *.energy
-    #echo "Check which execution had problem.."
-    FOLDERS=`ls -d */`
-    for i in $FOLDERS ;
-    do  
-       cd $i;      
-       value=$(wc -l *.energy | awk '{print $1}' | sed '$d' | datamash sstdev 1)  
-       #new_value=`/usr/bin/printf "%.0f" $value`
-       new_value=$(echo $value | awk '{printf "%d", $new_value}')
-       if [ $new_value -gt 3 ] # I suggest an stdev over 5 problem
-       then
-          echo $i
-          wc -l *.energy | awk '{print $1}' | sed '$d' | datamash min 1 max 1
-          echo "------------------------"            
-       fi;
-       cd ..
-    done
-    echo ""
-}
 
 #This function is responsible to group pmcs by second to be compatible with the power collection. After that, the pmcs is mapped to average energy
 #At the end each line will have associated to energy
