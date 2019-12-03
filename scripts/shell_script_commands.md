@@ -22,6 +22,11 @@ aux=`echo $stdev / $root_squared | bc -l`
 
 tics=`/usr/bin/printf "%.0f" $result` #Round to up or down
 
+**Incremento**
+
+count=0
+count=$(($count + 1)) 
+
 **Operações de impressão/remoção linhas**
 
 - remoção de todas as linhas superiores a um valor X
