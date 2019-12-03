@@ -54,6 +54,15 @@ for num in $(seq 1 $num_columns);
 do  
 done
 
+- usando while
+
+c=1
+while [ $c -le 5 ]
+do
+	echo "Welcone $c times"
+	(( c++ ))
+done
+
 **Files**
 - percorrer todos os files com um padrão
 
