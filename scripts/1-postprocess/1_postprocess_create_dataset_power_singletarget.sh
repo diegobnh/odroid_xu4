@@ -70,175 +70,118 @@ restart_script ()
 }
 
 
-#As we have 9 or 10 energy collect from each application, we need to calculate the average from each application.
-#This function creates a dataset putting all energy in one file for calculate the power average 
-#At the end, each application will have a file called "energy_all.postprocess" with all energy collected.
-gather_energy_measurements(){   
-   FOLDERS=`ls -d 4b_* 4b4l_A15*`
+check_energy_measurements(){   
+   FOLDERS=`ls -d */`
    for i in $FOLDERS ;
    do
        cd $i;     
+       
        rm -f *.dat
-       for f in *.energy; do  
-            name=$(echo "$f" | cut -f 1 -d '.')                        
-            cat $f | awk '{print $2}' > $name".dat"                     
-       done
+       #for f in *.energy; do 
+       #     name=$(echo "$f" | cut -f 1 -d '.')               
+       #     cat $f | awk '{print $2}' > $name".dat"                  
+       #done
    
-       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1) 
-       MAX_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash max 1) 
+
+       MIN_LINES=$(wc -l *.energy | awk '{print $1}' | sed '$d' | datamash min 1) 
+       MAX_LINES=$(wc -l *.energy | awk '{print $1}' | sed '$d' | datamash max 1) 
        DIFF=$(echo "$MAX_LINES $MIN_LINES" | awk '{print $1-$2}')
 
        flag=0
        if [ $DIFF -gt 10 ] 
        then
              flag=1
-             echo "You need to collect energy again to folder " $i
-             echo "But you just need to get again outliers files, not all"
-             wc -l *.dat
+             echo "You need to collect energy again to folder " $i ". But you just need to get again outliers files, not all"
        fi
-
+       
        if [ $flag -eq 1 ]
        then
            exit 1
-       fi
-       
-       sed -i -n "1,$MIN_LINES p" *.dat    
-       paste *.dat -d ',' > energy_all.postprocess
+       fi       
+
+       #sed -i -n "1,$MIN_LINES p" *.dat
+
+       #paste *.dat -d ',' > energy_all.postprocess
        
        #python3 ../plot_energy.py 10  #10 total performance counter
-       rm *.dat
-       cd ..;
-   done
-
-   FOLDERS=`ls -d 4l_* 4b4l_A7*`
-   for i in $FOLDERS ;
-   do
-       cd $i;     
-       rm -f *.dat
-       for f in *.energy; do  
-            name=$(echo "$f" | cut -f 1 -d '.')                        
-            cat $f | awk '{print $2}' > $name".dat"                     
-       done
-   
-       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1) 
-       MAX_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash max 1) 
-       DIFF=$(echo "$MAX_LINES $MIN_LINES" | awk '{print $1-$2}')
-
-       flag=0
-       if [ $DIFF -gt 10 ] 
-       then
-             flag=1
-             echo "You need to collect energy again to folder " $i
-             echo "But you just need to get again outliers files, not all"
-             wc -l *.dat
-       fi
-
-       if [ $flag -eq 1 ]
-       then
-           exit 1
-       fi
-       
-       sed -i -n "1,$MIN_LINES p" *.dat    
-       paste *.dat -d ',' > energy_all.postprocess
-       
-       #python3 ../plot_energy.py 9
-       rm *.dat
+       #rm *.dat
        cd ..;
    done
 }
 
 
-
-
-#This function is responsible to group pmcs by second to be compatible with the power collection. After that, the pmcs is mapped to average energy
-#At the end each line will have associated to energy
+#This function is responsible to group pmcs by second to be compatible with the power collection. After that, all files have the same number of line.
+#The next step is to calculate the average for cycles and power
 map_pmcs_to_energy()
 {
-    #you need to calculate average to each second    
-    #after you nedd to join with energy
-
-    if [ $1 = "little" ]; then
-
-       files=`ls *.energy` #cada csv possui 4 pmcs
-       for file in $files ;
-       do
-           cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' > temp
-           mv temp $file
-       done
-
-       files=`ls *.csv` #cada csv possui 4 pmcs
-       for file in $files ;
-       do
-           #remove the extension of a filename 
-           name=$(echo "$file" | cut -f 1 -d '.') 
-           #agrupando os pmcs dentro de 1 segundo
-           cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-6 | tr "," "." | tr "\t" "," > temp
-           mv temp $file
-           #join entre os pmcs já calculados a média e o cálculo da energia
-           join -t , $file $name".energy"  > temp
-           mv temp $file
-        done  
-
-        NUM_LINHAS_COMUM_PMCS=$(wc -l *.csv | awk '{print $1}' | sed '$d' | datamash min 1)
-        NUM_LINHAS_COMUM_ENERGY=$(wc -l energy_all.postprocess | awk '{print $1}')
-
-        #calcula a media da potência para cada segundo a partir do arquivo agregado de potências.
-        cat energy_all.postprocess | tr "," "\t" | awk '{s=0; for (i=1;i<=NF;i++)s+=$i; print s/NF;}' > energy.avg
-
-        #remove todas as linhas a mais que for acima do número de linhas do arquivo de energia
-        if [ $NUM_LINHAS_COMUM_PMCS -gt $NUM_LINHAS_COMUM_ENERGY ]
-        then
-             sed -i -n "1,$NUM_LINHAS_COMUM_ENERGY p" *.csv
-             sed -i -n "1,$NUM_LINHAS_COMUM_ENERGY p" energy.avg
-        else
-             sed -i -n "1,$NUM_LINHAS_COMUM_PMCS p" *.csv
-             sed -i -n "1,$NUM_LINHAS_COMUM_PMCS p" energy.avg
-        fi
-       
-            
-    elif [ $1 = "big" ]; then
-
-        files=`ls *.energy` #cada csv possui 6 pmcs
-        for file in $files ;
+        #If you get here, is because all the energy files are nearly equals.
+        folders=`ls -d */` 
+        for f in $folders ;
         do
-            cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' > temp
-            mv temp $file
+                cd $f
+                files=`ls *.energy` 
+                for file in $files ;
+                do           
+                   name=$(echo "$file" | cut -f 1 -d '.') 
+                   #just remove the format of timestamp to join with pmcs
+                   cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' > temp
+                   mv temp $name".aux_energy"
+                done
+
+                cd ..
         done
 
-        files=`ls *.csv` #cada csv possui 6 pmcs
-        for file in $files ;
+        folders=`ls -d */` 
+        for f in $folders ;
         do
-            #echo "analisando:"$file
-            #remove the extension of a filename 
-            name=$(echo "$file" | cut -f 1 -d '.') 
-            cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-8 | tr "," "." | tr "\t" "," > temp
-            mv temp $file
-            join -t , $file $name".energy"  > temp
-            mv temp $file                
-        done 
+                cd $f
 
-        NUM_LINHAS_COMUM_PMCS=$(wc -l *.csv | awk '{print $1}' | sed '$d' | datamash min 1)
-        NUM_LINHAS_COMUM_ENERGY=$(wc -l energy_all.postprocess | awk '{print $1}')
+                files=`ls *.csv` #cada csv possui 4 pmcs
+                for file in $files ;
+                do
+                   #remove the extension of a filename 
+                   name=$(echo "$file" | cut -f 1 -d '.') 
+                   #agrupando os pmcs dentro de 1 segundo
+                   if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
+                   then      
+                       cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-6 | tr "," "." | tr "\t" "," > temp
+                   elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
+                   then
+                       cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-8 | tr "," "." | tr "\t" "," > temp
+                   else
+                       echo "Invalid argument!!"
+                       exit -1
+                   fi
+                   mv temp $name".aux_pmcs"
 
-        cat energy_all.postprocess | tr "," "\t" | awk '{s=0; for (i=1;i<=NF;i++)s+=$i; print s/NF;}' > energy.avg
+                   #join entre os pmcs já calculados a média e o cálculo da energia
+                   join -t , $name".aux_pmcs" $name".aux_energy"  > temp
+                   mv temp $name".map"
 
-       
-        if [ $NUM_LINHAS_COMUM_PMCS -gt $NUM_LINHAS_COMUM_ENERGY ]
-        then
-             sed -i -n "1,$NUM_LINHAS_COMUM_ENERGY p" *.csv
-             sed -i -n "1,$NUM_LINHAS_COMUM_ENERGY p" energy.avg
-        else
-             sed -i -n "1,$NUM_LINHAS_COMUM_PMCS p" *.csv
-             sed -i -n "1,$NUM_LINHAS_COMUM_PMCS p" energy.avg
-        fi
+                   #check if someone stay out after join
+                   n2=$(wc -l $name".aux_pmcs" | awk '{print $1}')
+                   n1=$(wc -l $name".map" | awk '{print $1}')
+                   
+                   if [ $n1 -ne $n2 ]
+                   then
+                      echo "Some lines was dropped during the join. Lines for pmcs "$n1". Lines for energy "$n2 " Folder "$f 
+                   fi
+		   
+		   #remove the timestamp column. Is not necessary 
+                   cut -d, -f1 --complement $name".map" > aux
+                   mv aux $name".map" 
+                done  
 
-     else
-        echo "You need pass as argument cluster name: big or little"
-        read -p "Press enter to exit!"
-        exit 1
-     fi
+                MIN_PMCS=$(wc -l *.map | awk '{print $1}' | sed '$d' | datamash min 1)
+                sed -i -n "1,$MIN_PMCS p" *.map
+
+                rm -f aux* *.aux_pmcs *.aux_energy
+		
+                cd ..
+        done
 
 }
+
 
 create_dataset ()
 {
