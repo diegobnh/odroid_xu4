@@ -65,9 +65,16 @@ gather_energy_measurements(){
             count=$(($count + 1))         
        done
    
-       NUM_LINHAS_COMUM=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1)       
-       sed -i -n "1,$NUM_LINHAS_COMUM p" *.dat
+       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1)       
+       AVERAGE_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash mean 1)              
+       DIFF=$(echo "$AVERAGE_LINES $MIN_LINES" | awk '{print $1-$2}')
 
+       if [ $DIFF -gt 10 ] 
+       then
+             echo "You need to collect energy again to "$i "(Min_lines "$MIN_LINES "Average_lines "$AVERAGE_LINES")"
+       fi
+       sed -i -n "1,$MIN_LINES p" *.dat
+    
        paste *.dat -d ',' > energy_all.postprocess
        
        #python3 ../plot_energy.py 10  #10 total performance counter
@@ -85,10 +92,17 @@ gather_energy_measurements(){
             cat $f | awk '{print $2}' > $count".dat"
             count=$(($count + 1))         
        done
-   
-       NUM_LINHAS_COMUM=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1)       
-       sed -i -n "1,$NUM_LINHAS_COMUM p" *.dat
+      
+       MIN_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash min 1)       
+       AVERAGE_LINES=$(wc -l *.dat | awk '{print $1}' | sed '$d' | datamash mean 1)              
+       DIFF=$(echo "$AVERAGE_LINES $MIN_LINES" | awk '{print $1-$2}')
 
+       if [ $DIFF -gt 10 ] 
+       then
+             echo "You need to collect energy again to "$i "(Min_lines "$MIN_LINES "Average_lines "$AVERAGE_LINES")"
+       fi
+       sed -i -n "1,$MIN_LINES p" *.dat
+    
        paste *.dat -d ',' > energy_all.postprocess
        
        #python3 ../plot_energy.py 9
