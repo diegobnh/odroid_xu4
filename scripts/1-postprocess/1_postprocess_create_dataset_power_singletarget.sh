@@ -281,8 +281,8 @@ create_dataset_single_target ()
 
 create_dataset_multi_target ()
 {
-   printf "This script use other script responsible to create consolidate.csv file for each config and each application. \n"
-   read -p "Press enter in case already executed it before.."
+   #printf "This script use other script responsible to create consolidate.csv file for each config and each application. \n"
+   #read -p "Press enter in case already executed it before.."
 
    #Essa ordem é importante pois o plot assume ordem igual
    #APPS=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen")
