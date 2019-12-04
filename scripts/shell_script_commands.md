@@ -121,7 +121,6 @@ done
 
 cat temp | awk -v app="$i" '{print "standard deviation time:",$1,"App:", app}' > desv
 
-
 - não imprimir determinadas colunas
 
 cat temp2 | tr "," " " | awk '{$1=$9=$10=$11=$12=""; print}' > temp3
@@ -129,6 +128,11 @@ cat temp2 | tr "," " " | awk '{$1=$9=$10=$11=$12=""; print}' > temp3
 - contando número de colunas de um arquivo
 
 cat consolidated-pmc-little.csv | awk -F',' '{print NF; exit}'
+
+- obter o primeiro e o último elemento da primeira coluna
+
+$start=$(awk -F',' 'NR==1{print $1}' file.csv)
+$end=$(awk -F',' 'END{print $1}' file.csv)
 
 **paste**
 
