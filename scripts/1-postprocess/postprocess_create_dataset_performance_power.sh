@@ -100,9 +100,9 @@ map_pmcs_to_energy()
    for f in $folders ;
    do
        cd $f
-       rm -f consolidate*
+       rm -f consolidate* times.txt
 
-       files=`ls *.csv` #cada csv possui 4 pmcs
+       files=`ls *.csv` 
        for file in $files ;
        do
           #remove the extension of a filename 
