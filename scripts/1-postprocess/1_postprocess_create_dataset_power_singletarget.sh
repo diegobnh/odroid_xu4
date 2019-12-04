@@ -14,9 +14,7 @@ NUM=int(sys.argv[1])
 if len(sys.argv) < 2:
   print("Miss argument")
   
-
 data = pd.read_csv("energy_all.postprocess",header=None) #pandas will assume the first row is the header.
-
 fig, axs = plt.subplots(NUM)
 fig.suptitle('Sharing both axes')
 
@@ -24,7 +22,6 @@ for i in range(NUM):
    axs[i].plot(data.iloc[:,i])
 
 plt.savefig('plot.png')
-
 '
 
 restart_script ()
@@ -49,12 +46,8 @@ restart_script ()
     #read -p "Clear and copy all folders. Press enter to continue!"
 }
 
-#!/bin/sh
-
-
-#As we have 9 or 10 energy collect from each application, we need to calculate the average from each application.
-#This function creates a dataset putting all energy in one file for calculate the power average 
-#At the end, each application will have a file called "energy_all.postprocess" with all energy collected.
+#This function is responsible to check if happens some problems during power collect
+#If exist, we need to collect again!
 check_energy_measurements(){   
 
    FOLDERS=`ls -d */`
@@ -63,11 +56,6 @@ check_energy_measurements(){
        cd $i;     
        
        rm -f *.dat
-       #for f in *.energy; do 
-       #     name=$(echo "$f" | cut -f 1 -d '.')               
-       #     cat $f | awk '{print $2}' > $name".dat"                  
-       #done
-   
 
        MIN_LINES=$(wc -l *.energy | awk '{print $1}' | sed '$d' | datamash min 1) 
        MAX_LINES=$(wc -l *.energy | awk '{print $1}' | sed '$d' | datamash max 1) 
@@ -76,21 +64,14 @@ check_energy_measurements(){
        flag=0
        if [ $DIFF -gt 10 ] 
        then
-             flag=1
-             echo "You need to collect energy again to folder " $i ". But you just need to get again outliers files, not all"
+           flag=1
+           echo "You need to collect energy again to folder " $i ". But you just need to get again outliers files, not all"
        fi
        
        if [ $flag -eq 1 ]
        then
            exit 1
-       fi       
-
-       #sed -i -n "1,$MIN_LINES p" *.dat
-
-       #paste *.dat -d ',' > energy_all.postprocess
-       
-       #python3 ../plot_energy.py 10  #10 total performance counter
-       #rm *.dat
+       fi          
        cd ..;
    done
 }
@@ -103,69 +84,68 @@ map_pmcs_to_energy()
    folders=`ls -d */` 
    for f in $folders ;
    do
-           cd $f
-           files=`ls *.energy` 
-           for file in $files ;
-           do           
-              name=$(echo "$file" | cut -f 1 -d '.') 
-              #just remove the format of timestamp to join with pmcs
-              cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' > temp
-              mv temp $name".aux_energy"
-           done
-           cd ..
+       cd $f
+       files=`ls *.energy` 
+       for file in $files ;
+       do           
+           name=$(echo "$file" | cut -f 1 -d '.') 
+           #just remove the format of timestamp to join with pmcs
+           cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' > temp
+           mv temp $name".aux_energy"
+        done
+        cd ..
    done
 
    folders=`ls -d */` 
    for f in $folders ;
    do
-           cd $f
-           rm -f consolidate*
+       cd $f
+       rm -f consolidate*
 
-           files=`ls *.csv` #cada csv possui 4 pmcs
-           for file in $files ;
-           do
-              #remove the extension of a filename 
-              name=$(echo "$file" | cut -f 1 -d '.') 
-              #agrupando os pmcs dentro de 1 segundo
-              if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
-              then      
-                  cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-6 | tr "," "." | tr "\t" "," > temp
-              elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
-              then
-                  cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-8 | tr "," "." | tr "\t" "," > temp
-              else
-                  echo "Invalid argument!!"
-                  exit -1
-              fi
+       files=`ls *.csv` #cada csv possui 4 pmcs
+       for file in $files ;
+       do
+          #remove the extension of a filename 
+          name=$(echo "$file" | cut -f 1 -d '.') 
+          #agrupando os pmcs dentro de 1 segundo
+          if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
+          then      
+              cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-6 | tr "," "." | tr "\t" "," > temp
+          elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
+          then
+               cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-8 | tr "," "." | tr "\t" "," > temp
+          else
+               echo "Invalid argument!!"
+               exit -1
+          fi
 
-              mv temp $name".aux_pmcs"
+          mv temp $name".aux_pmcs"
 
-              #join entre os pmcs já calculados a média e o cálculo da energia
-              join -t , $name".aux_pmcs" $name".aux_energy"  > temp
-              mv temp $name".map"
-              
-
-              #check if someone stay out after join
-              n2=$(wc -l $name".aux_pmcs" | awk '{print $1}')
-              n1=$(wc -l $name".map" | awk '{print $1}')
+          #join entre os pmcs já calculados a média e o cálculo da energia
+          join -t , $name".aux_pmcs" $name".aux_energy"  > temp
+          mv temp $name".map"
+        
+          #check if someone stay out after join
+          n2=$(wc -l $name".aux_pmcs" | awk '{print $1}')
+          n1=$(wc -l $name".map" | awk '{print $1}')
                  
-              if [ $n1 -ne $n2 ]
-              then
-                 echo "Some lines was dropped during the join. Lines for pmcs "$n1". Lines for energy "$n2 
-              fi               
+          if [ $n1 -ne $n2 ]
+          then
+             echo "Some lines was dropped during the join. Lines for pmcs "$n1". Lines for energy "$n2 
+          fi               
 
-              #remove the timestamp column. Is not necessary 
-              cut -d, -f1 --complement $name".map" > aux
-              mv aux $name".map"
+          #remove the timestamp column. Is not necessary 
+          cut -d, -f1 --complement $name".map" > aux
+          mv aux $name".map"
                    
-           done  
+       done  
 
-           MIN_PMCS=$(wc -l *.map | awk '{print $1}' | sed '$d' | datamash min 1)
-           sed -i -n "1,$MIN_PMCS p" *.map
+       MIN_PMCS=$(wc -l *.map | awk '{print $1}' | sed '$d' | datamash min 1)
+       sed -i -n "1,$MIN_PMCS p" *.map
                 
-           rm -f aux* *.aux_pmcs *.aux_energy
+       rm -f aux* *.aux_pmcs *.aux_energy
                 
-           cd ..
+       cd ..
    done
 
 }
@@ -175,59 +155,59 @@ agregate_pmcs ()
    folders=`ls -d */` 
    for f in $folders ;
    do
-           cd $f
+       cd $f
 
-           count=-1
-           files=`ls *.map` #cada csv possui 4 pmcs
-           for file in $files ;
-           do
-               count=$(($count + 1)) 
-               if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
-               then 
-                    cat $file | awk -F "," '{printf "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",$1,$2,$3,$4,$5,$6}' >  $count".dat"  
-               elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
-               then
-                    cat $file | awk -F "," '{printf "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", $1,$2,$3,$4,$5,$6,$7,$8}' > $count".dat"
-               fi
-           done
+       count=-1
+       files=`ls *.map` #cada csv possui 4 pmcs
+       for file in $files ;
+       do
+           count=$(($count + 1)) 
+           if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
+           then 
+                cat $file | awk -F "," '{printf "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",$1,$2,$3,$4,$5,$6}' >  $count".dat"  
+           elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
+           then
+                cat $file | awk -F "," '{printf "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", $1,$2,$3,$4,$5,$6,$7,$8}' > $count".dat"
+           fi
+       done
                  
-           if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
-           then  
-                #the last file just have one pmcs, the other three are null. Especific for A7
-                cat $count".dat" | cut -d, -f1,2 > temp; mv temp $count".dat"  
-           elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
-           then 
-                #the last file just have two pmcs, the other four are null. But it was necessary add ONE MORE BEACUSE NOW CYCLES
-                cat $count".dat" | cut -d, -f1,2,3 > temp; mv temp $count".dat" 
-           fi
+       if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
+       then  
+            #the last file just have one pmcs, the other three are null. Especific for A7
+            cat $count".dat" | cut -d, -f1,2 > temp; mv temp $count".dat"  
+       elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
+       then 
+            #the last file just have two pmcs, the other four are null. But it was necessary add ONE MORE BEACUSE NOW CYCLES
+            cat $count".dat" | cut -d, -f1,2,3 > temp; mv temp $count".dat" 
+       fi
 
-           paste *.dat -d "," > aux1
-           rm *.dat 
+       paste *.dat -d "," > aux1
+       rm *.dat 
 
-           if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
-           then  
-                   #calculate the power average and cycles average
-                   cat aux1 | awk -F, '{printf "%.4f\n", ($1+$7+$13+$19+$25+$31+$37+$43+$49)/9}' > cycles_avg
-                   cat aux1 | awk -F, '{printf "%.4f\n", ($6+$12+$18+$24+$30+$36+$42+$48+$54)/9}' > power_avg
+       if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
+       then  
+               #calculate the power average and cycles average
+               cat aux1 | awk -F, '{printf "%.4f\n", ($1+$7+$13+$19+$25+$31+$37+$43+$49)/9}' > cycles_avg
+               cat aux1 | awk -F, '{printf "%.4f\n", ($6+$12+$18+$24+$30+$36+$42+$48+$54)/9}' > power_avg
 
-                   #remove all power and cycles
-                   cut -d, -f1,6,7,12,13,18,19,24,25,30,31,36,37,42,43,48,49,54 --complement aux1 > aux2
-                   paste cycles_avg aux2 power_avg -d "," > consolidated-pmc-little.csv
+               #remove all power and cycles
+               cut -d, -f1,6,7,12,13,18,19,24,25,30,31,36,37,42,43,48,49,54 --complement aux1 > aux2
+               paste cycles_avg aux2 power_avg -d "," > consolidated-pmc-little.csv
 
-           elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
-           then 
-                   #calculate the power average and cycles average
-                   cat aux1 | awk -F, '{printf "%.4f\n", ($1+$9+$17+$25+$33+$41+$49+$57+$65+$73)/10}' > cycles_avg
-                   cat aux1 | awk -F, '{printf "%.4f\n", ($8+$16+$24+$32+$40+$48+$56+$64+$72+$80)/10}' > power_avg
+       elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
+       then 
+               #calculate the power average and cycles average
+               cat aux1 | awk -F, '{printf "%.4f\n", ($1+$9+$17+$25+$33+$41+$49+$57+$65+$73)/10}' > cycles_avg
+               cat aux1 | awk -F, '{printf "%.4f\n", ($8+$16+$24+$32+$40+$48+$56+$64+$72+$80)/10}' > power_avg
 
-                   #remove all power and cycles
-                   cut -d, -f1,8,9,16,17,24,25,32,33,40,41,48,49,56,57,64,65,72,73,80 --complement aux1 > aux2
+               #remove all power and cycles
+               cut -d, -f1,8,9,16,17,24,25,32,33,40,41,48,49,56,57,64,65,72,73,80 --complement aux1 > aux2
 
-                   paste cycles_avg aux2 power_avg -d "," > consolidated-pmc-big.csv
-           fi
+               paste cycles_avg aux2 power_avg -d "," > consolidated-pmc-big.csv
+       fi
 
-           rm -f aux* *_avg out
-           cd ..
+       rm -f aux* *_avg out
+       cd ..
    done
           
 }
