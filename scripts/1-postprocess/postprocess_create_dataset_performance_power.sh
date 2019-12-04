@@ -135,8 +135,8 @@ map_pmcs_to_energy()
           fi               
 
           #calculate execution time
-          original_start_time=$(cat $file | awk -F' ' 'NR==2{print $1}')
-          original_end_time=$(cat $file | awk -F' ' 'END{print $1}')
+          original_start_time=$(cat $file | awk -F',' 'NR==2{print $1}')
+          original_end_time=$(cat $file | awk -F',' 'END{print $1}')
           start=$(echo $original_start_time | sed 's/\[//g ; s/\]//g' | awk '{print $1}' )
           end=$(echo $original_end_time | sed 's/\[//g ; s/\]//g' | awk '{print $1}' )
           StartDate=$(date -u -d "$start" +"%s")
