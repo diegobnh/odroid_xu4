@@ -134,6 +134,16 @@ map_pmcs_to_energy()
              echo "Some lines was dropped during the join. Lines for pmcs "$n1". Lines for energy "$n2 
           fi               
 
+          #calculate execution time
+          original_start_time=$(cat $file | awk -F' ' 'NR==2{print $1}')
+          original_end_time=$(cat $file | awk -F' ' 'END{print $1}')
+          start=$(echo $original_start_time | sed 's/\[//g ; s/\]//g' | awk '{print $1}' )
+          end=$(echo $original_end_time | sed 's/\[//g ; s/\]//g' | awk '{print $1}' )
+          StartDate=$(date -u -d "$start" +"%s")
+          FinalDate=$(date -u -d "$end" +"%s")
+          seconds=$(date -u -d "0 $FinalDate sec - $StartDate sec" +"%H:%M:%S" | awk -F: '{print ($1*3600)+($2*60)+$3}')
+          echo $seconds >> times.txt
+
           #remove the timestamp column. Is not necessary 
           cut -d, -f1 --complement $name".map" > aux
           mv aux $name".map"
@@ -142,7 +152,9 @@ map_pmcs_to_energy()
 
        MIN_PMCS=$(wc -l *.map | awk '{print $1}' | sed '$d' | datamash min 1)
        sed -i -n "1,$MIN_PMCS p" *.map
-                
+       
+       cat times.txt | tr "." "," | datamash mean 1 | tr "," "." > exec_time.average
+       
        rm -f aux* *.aux_pmcs *.aux_energy
                 
        cd ..
