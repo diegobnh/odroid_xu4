@@ -292,14 +292,12 @@ create_dataset_multi_target ()
    #Após isso, todas as outras confgurações deverá ter relação igual ou superior a 1. Essa relação será armazenada na variável "tics"
 
    for ((j = 0; j < ${#APPS[@]}; j++));
-   do   
-          echo ${APPS[$j]} 
+   do             
           MIN_LINES=$(wc -l *${APPS[$j]}/consolidated* | awk '{print $1}' | datamash min 1)
           echo "Min:"$MIN_LINES
           folders=$(ls -d *${APPS[$j]})
           for i in $folders ;
-          do
-             echo "folder:"$i
+          do             
              rm -f consolidate.tics               
              cd $i;          
                      current=$(wc -l consolidated* | awk '{print $1}')
@@ -332,8 +330,7 @@ create_dataset_multi_target ()
              cd ..    
           done
    done
-
-   read -p "..."           
+           
    #Essa última etapa é feito o cálculo dos targets para cada configuração e adicionado ao final do arquivo.
 
    #Primeiro é inserido todas as coletas de cada configuração. Todos os arquivos terão o mesmo número de linhas.
