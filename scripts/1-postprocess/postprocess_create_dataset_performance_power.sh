@@ -286,7 +286,6 @@ create_dataset_multi_target ()
    for ((j = 0; j < ${#APPS[@]}; j++));
    do             
           MIN_LINES=$(wc -l *${APPS[$j]}/consolidated* | awk '{print $1}' | datamash min 1)
-          echo "Min:"$MIN_LINES
           folders=$(ls -d *${APPS[$j]})
           for i in $folders ;
           do             
@@ -295,7 +294,6 @@ create_dataset_multi_target ()
                      current=$(wc -l consolidated* | awk '{print $1}')
                      result=$(echo "scale=1; $current / $MIN_LINES" | bc)
                      tics=`/usr/bin/printf "%.0f" $result` #Round to up or down
-                     echo $folder" tics"$tics
                      num_columns=$(cat consolidate* | awk -F, '{print NF; exit}')
                      for num in $(seq 1 $num_columns);     
                      do                                    
@@ -365,9 +363,13 @@ create_dataset_multi_target ()
    rm -f *.aux *temp columns_target
 }
 
-
+echo "1 - check_energy"
 check_energy_measurements
+echo "2 - map pmcs to energy"
 map_pmcs_to_energy
+echo "3 - agregate pmcs"
 agregate_pmcs
+echo "4 - create dataset power single target"
 create_dataset_single_target
+echo "5 - create dataset power multi target"
 create_dataset_multi_target 
