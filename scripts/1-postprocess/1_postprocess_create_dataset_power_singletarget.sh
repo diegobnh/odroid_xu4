@@ -250,7 +250,7 @@ create_dataset_single_target ()
 
    done
 
-   rm -f *.csv
+   rm -f *single_target.csv
 
    cat 4l_*/consolidated-pmc-little.csv | awk -F "," '{print}' >> 4l_single_target.csv
    cat 4b_*/consolidated-pmc-big.csv | awk -F "," '{print}' >> 4b_single_target.csv
@@ -296,7 +296,7 @@ create_dataset_multi_target ()
 
    done
 
-   rm -f *.csv
+   rm -f *multi_target.csv
 
    cat 4l_*/consolidated-pmc-little.csv | awk -F "," '{print}' >> 4l_multi_target.csv
    cat 4b_*/consolidated-pmc-big.csv | awk -F "," '{print}' >> 4b_multi_target.csv
