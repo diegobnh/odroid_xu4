@@ -152,6 +152,9 @@ do
     cd $i; 
     #get all lines start with [ , after replace ' to ", after replace "]" to "]," and remove the last comma 
     grep '^\[' stdout_predictor | tr "\'" "\""  | sed 's/\]/\],/g' | sed '$s/,$//g' > ../switch_dataset.dat
+    
+    #grep '^\"' stdout_predictor | sed -e 's/^\"/["/' | sed -e 's/,$/],/g' | sed '$s/,$//g' > ../switch_dataset.dat
+
     cd ..
 done
 }
