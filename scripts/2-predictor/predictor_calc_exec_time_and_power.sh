@@ -145,6 +145,8 @@ done
 rm -f apps_total_energy
 }
 
+#This function just be used one file switch_dataset. Here is more difficult to calculate average
+#So, you need to choice one folder e execute this command
 generate_switch_config_dataset ()
 {
 for i in $folders;
@@ -160,4 +162,4 @@ done
 }
 calculate_exec_time_dynamic_case
 calculate_power_dynamic_case
-generate_switch_config_dataset
+#generate_switch_config_dataset
