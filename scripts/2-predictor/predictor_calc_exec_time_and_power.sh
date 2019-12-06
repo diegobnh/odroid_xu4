@@ -145,42 +145,16 @@ done
 rm -f apps_total_energy
 }
 
-calc_edp_dynamic_case()
+generate_switch_config_dataset ()
 {
-
-for ((k = 0; k< ${#APPS[@]}; k++));
+for i in $folders;
 do
-     cat */stderror* | grep ${APPS[$k]} | tr "," "\t" | tr "," "."| awk '{printf "%.2f\n", $4}' > exec_times
-
-     rm -f powers
-     folders=$(ls -d */)
-     for i in $folders;
-     do        
-        cd $i;     
-             start_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $2}')
-             end_time=$(cat stderror* | grep ${APPS[$k]} | awk -F "," '{print $3}')
-             sudo sed -n '/^\'$start_time'/,/^\'$end_time'/p' ${APPS[$k]}".energy" > interval_energy
-             sed -i '1d' interval_energy #remove fisrt line, because the calculate begin after 1 second not in the zero time
-             cat interval_energy | tr " " "\t" | tr "." "," | datamash sum 2 | tr "," "." >> ../powers
-        cd ..
-     done
-     paste exec_times powers | awk '{printf "%.2f\n", $1*$2}' > edps
-    
-     mean=$(cat edps |  tr "." "," | datamash mean 1 | tr "," "." | awk '{printf "%.2f", $1}')
-     stdev=$(cat edps |  tr "." "," | datamash sstdev 1 | tr "," "."| awk '{printf "%.2f", $1}')
-     root_squared=$(echo "sqrt ( 10 )" | bc -l)
-     aux=`echo $stdev / $root_squared | bc -l`
-     interval=$(echo $aux | awk '{printf "%.2f\n",$1*1.96}')
-
-     echo -n $mean"," >> model_edp.dat
-     echo -n $interval"," >> model_edp_error.dat
-          
+    cd $i; 
+    #get all lines start with [ , after replace ' to ", after replace "]" to "]," and remove the last comma 
+    grep '^\[' stdout_predictor | tr "\'" "\""  | sed 's/\]/\],/g' | sed 's/,$//g' > switch_dataset
+    cd ..
 done
-
-rm -f powers edps exec_times
-
 }
-
 calculate_exec_time_dynamic_case
 calculate_power_dynamic_case
-calc_edp_dynamic_case
+generate_switch_config_dataset
