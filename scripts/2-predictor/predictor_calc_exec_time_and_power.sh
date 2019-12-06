@@ -151,7 +151,7 @@ for i in $folders;
 do
     cd $i; 
     #get all lines start with [ , after replace ' to ", after replace "]" to "]," and remove the last comma 
-    grep '^\[' stdout_predictor | tr "\'" "\""  | sed 's/\]/\],/g' | sed '$s/,$//g' > ../switch_dataset
+    grep '^\[' stdout_predictor | tr "\'" "\""  | sed 's/\]/\],/g' | sed '$s/,$//g' > ../switch_dataset.dat
     cd ..
 done
 }
