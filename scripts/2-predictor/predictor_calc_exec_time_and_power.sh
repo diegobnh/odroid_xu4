@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this order is the same as the scheduler execution
-APPS=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen" "backprop" "heartwall" "lavaMD" "particle_filter")
+APPS=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen" "backprop" "heartwall" "lavaMD" "particlefilter")
 NUM_EXECUTIONS=10
 
 rm -f *.dat
