@@ -129,8 +129,9 @@ map_pmcs_to_energy()
           n2=$(wc -l $name".aux_pmcs" | awk '{print $1}')
           n1=$(wc -l $name".map" | awk '{print $1}')
                  
-          if [ $n1 -ne $n2 ]
+          if [ $n1 -gt $n2 ]
           then
+             echo "In "$f "File " $file
              echo "Some lines was dropped during the join. Lines for pmcs "$n1". Lines for energy "$n2 
           fi               
 
