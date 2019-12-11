@@ -160,6 +160,18 @@ do
     cd ..
 done
 }
-calculate_exec_time_dynamic_case
-calculate_power_dynamic_case
-#generate_switch_config_dataset
+
+
+
+read -p "Inform 0 for DEFAULT and 1 for DYNAMIC : " arg
+
+if [ $arg -eq 0 ]
+then
+   echo "Calculating Default case"
+   calculate_exec_time_default_case
+   calculate_power_default_case  
+else
+   echo "Calculating Dynamic case"
+   calculate_exec_time_dynamic_case
+   calculate_power_dynamic_case
+fi
