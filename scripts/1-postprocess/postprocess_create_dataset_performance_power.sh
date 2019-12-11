@@ -24,6 +24,9 @@ for i in range(NUM):
 plt.savefig('plot.png')
 '
 
+APPS=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen")
+
+
 restart_script ()
 {
     rm -f *.csv 
@@ -226,11 +229,8 @@ agregate_pmcs ()
 }
 
 
-create_dataset_single_target ()
+create_dataset_power_singletarget ()
 {
-   #APPS=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen")
-   APPS=("nqueens")
-
    #A7 and A15 need to have the same number of lines
    for ((j = 0; j < ${#APPS[@]}; j++));
    do 
@@ -272,14 +272,12 @@ create_dataset_single_target ()
    rm aux* Energy_* Average* All_energy
 }
 
-create_dataset_multi_target ()
+create_dataset_power_multitarget ()
 {
    #printf "This script use other script responsible to create consolidate.csv file for each config and each application. \n"
    #read -p "Press enter in case already executed it before.."
 
    #Essa ordem é importante pois o plot assume ordem igual
-   #APPS=("fib" "nqueens" "health" "floorplan" "fft" "sort" "sparselu" "strassen")
-   APPS=("nqueens")
 
    #A primeira coisa a ser feita é descobrir para cada aplicação, qual configuração teve o menor tempo. 
    #Após isso, todas as outras confgurações deverá ter relação igual ou superior a 1. Essa relação será armazenada na variável "tics"
