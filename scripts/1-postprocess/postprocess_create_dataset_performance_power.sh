@@ -237,7 +237,7 @@ create_dataset_power_singletarget ()
        MIN_LINES=$(wc -l 4b4l_*${APPS[$j]}/consolidate* | awk '{print $1}' | datamash min 1)
 
        sed -n "1,$MIN_LINES p" 4b4l_A7_bots_${APPS[$j]}/consolidated-pmc-little.csv > 4b4l_A7_bots_${APPS[$j]}/aux;
-       mv 4b4l_A7_bots_${APPS[$j]}/aux 4b4l_A7_bots_${APPS[$j]}/consolidated-pmc-big.csv         
+       mv 4b4l_A7_bots_${APPS[$j]}/aux 4b4l_A7_bots_${APPS[$j]}/consolidated-pmc-little.csv         
        sed -n "1,$MIN_LINES p" 4b4l_A15_bots_${APPS[$j]}/consolidated-pmc-big.csv > 4b4l_A15_bots_${APPS[$j]}/aux;
        mv 4b4l_A15_bots_${APPS[$j]}/aux 4b4l_A15_bots_${APPS[$j]}/consolidated-pmc-big.csv 
 
