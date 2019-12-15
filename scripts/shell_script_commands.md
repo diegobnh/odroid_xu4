@@ -40,6 +40,12 @@ x=$((num_lines-2))
 sed -e "$x,\$d" $file > temp1
 sed -e "1,2d" temp1 > temp2
 
+- remoção das duas primeiras linhas
+(-i option edit the file itself. You could also remove that option and redirect the output to a new file or another command if you want. 1d deletes the first line (1 to only act on the first line, d to delete it)
+
+sed -i '1,2d' File 
+
+
 **Operações de remoção de colunas**
 
 - remover as últimas 3 colunas
