@@ -79,6 +79,20 @@ check_energy_measurements(){
    done
 }
 
+remove_lines_with_null_cycles_in_begin()
+{
+   while true
+   do
+
+        value=$(head -1 $1 | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | awk '{printf "%.0f\n", $2}')        
+        if [ $value -eq 0 ]
+        then
+            sed -i '1d' $1
+        else
+            break
+        fi
+   done
+}
 
 #This function is responsible to group pmcs by second to be compatible with the power collection. After that, all files have the same number of line.
 #The next step is to calculate the average for cycles and power
@@ -113,9 +127,11 @@ map_pmcs_to_energy()
           #agrupando os pmcs dentro de 1 segundo
           if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
           then      
+              remove_lines_with_null_cycles_in_begin $file
               cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-6 | tr "," "." | tr "\t" "," > temp
           elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
           then
+               remove_lines_with_null_cycles_in_begin $file
                cat $file | sed -re 's/[[]/ /g' | sed -re 's/] /,/g' | tr "," "\t"  | tr "." "," | datamash -s -g 1 mean 2-8 | tr "," "." | tr "\t" "," > temp
           else
                echo "Invalid argument!!"
