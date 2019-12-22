@@ -229,7 +229,7 @@ agregate_pmcs ()
                cat all_power | tr "," "\t" | tr "." "," | datamash transpose | datamash median 1-$n_lines | datamash transpose | tr "," "." > power_median
 
                #remove all power and cycles
-               cut -d, -f1,6,7,12,13,18,19,24,25,30,31,36,37,42,43,48,49,54 --complement aux1 > aux2
+               cut -d, -f1,6,7,12,13,18,19,24,25,30,31,36,37,42,43,48,49,51 --complement aux1 > aux2
                paste cycles_avg aux2 power_median -d "," > consolidated-pmc-little.csv
 
        elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
@@ -244,7 +244,7 @@ agregate_pmcs ()
                cat all_power | tr "," "\t" | tr "." "," | datamash transpose | datamash median 1-$n_lines | datamash transpose | tr "," "." > power_median
 
                #remove all power and cycles
-               cut -d, -f1,8,9,16,17,24,25,32,33,40,41,48,49,56,57,64,65,72,73,80 --complement aux1 > aux2
+               cut -d, -f1,8,9,16,17,24,25,32,33,40,41,48,49,56,57,64,65,72,73,76 --complement aux1 > aux2
 
                paste cycles_avg aux2 power_median -d "," > consolidated-pmc-big.csv
        fi
