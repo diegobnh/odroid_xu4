@@ -344,6 +344,8 @@ create_dataset_power_multitarget ()
    cat 4b_*/pmcs.tics > 4b.aux
    cat 4b4l_A7*/pmcs.tics > 4b4l_A7.aux
    cat 4b4l_A15*/pmcs.tics > 4b4l_A15.aux
+   
+   rm -f 4*/pmcs.tics
 
    #obtendo a última coluna(power) de cada arquivo
    cat 4l.aux | awk -F "," '{print $NF}' > 4l_target.aux
@@ -386,6 +388,8 @@ create_dataset_performance_multitarget ()
    cat 4b4l_A15*/exec_time.average > 4b4l_2
    cat 4b_*/exec_time.average > 4b
    cat 4l_*/exec_time.average > 4l
+   
+   rm -f 4*/exec_time.average
 
    paste 4b4l_1 4b4l_2 | awk '{print ($1+$2)*0.50}' > 4b4l
 
