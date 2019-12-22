@@ -207,11 +207,11 @@ agregate_pmcs ()
        if echo "$f" | grep "4b4l_A[5-9]" 1> out || echo "$f" | grep '^4l\_[a-z]*' 1> out
        then  
             #the last file just have one pmcs, the other three are null. Especific for A7
-            cat $count".dat" | cut -d, -f1,2 > temp; mv temp $count".dat"  
+            cat $count".dat" | cut -d, -f1,2,6 > temp; mv temp $count".dat"  
        elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
        then 
             #the last file just have two pmcs, the other four are null. But it was necessary add ONE MORE BEACUSE NOW CYCLES
-            cat $count".dat" | cut -d, -f1,2,3 > temp; mv temp $count".dat" 
+            cat $count".dat" | cut -d, -f1,2,3,8 > temp; mv temp $count".dat" 
        fi
 
        paste *.dat -d "," > aux1
@@ -221,25 +221,36 @@ agregate_pmcs ()
        then  
                #calculate the power average and cycles average
                cat aux1 | awk -F, '{printf "%.4f\n", ($1+$7+$13+$19+$25+$31+$37+$43+$49)/9}' > cycles_avg
-               cat aux1 | awk -F, '{printf "%.4f\n", ($6+$12+$18+$24+$30+$36+$42+$48+$54)/9}' > power_avg
+               cat aux1 | awk -F, '{printf "%.4f\n", ($6+$12+$18+$24+$30+$36+$42+$48+$51)/9}' > power_avg
+               
+               #As datamash just work per column, we need to make a transpose. Here we calculate a median and NOT the mean 
+               cat aux1 | awk -F, '{printf "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", $6,$12,$18,$24,$30,$36,$42,$48,$51}' > all_power
+               n_lines=$(wc -l all_power | awk '{print $1}')
+               cat all_power | tr "," "\t" | tr "." "," | datamash transpose | datamash median 1-$n_lines | datamash transpose | tr "," "." > power_median
 
                #remove all power and cycles
                cut -d, -f1,6,7,12,13,18,19,24,25,30,31,36,37,42,43,48,49,54 --complement aux1 > aux2
-               paste cycles_avg aux2 power_avg -d "," > consolidated-pmc-little.csv
+               paste cycles_avg aux2 power_median -d "," > consolidated-pmc-little.csv
 
        elif echo "$f" | grep "4b4l_A1[0-9]" 1> out || echo "$f" | grep '4b_[a-z]*' 1> out
        then 
                #calculate the power average and cycles average
                cat aux1 | awk -F, '{printf "%.4f\n", ($1+$9+$17+$25+$33+$41+$49+$57+$65+$73)/10}' > cycles_avg
-               cat aux1 | awk -F, '{printf "%.4f\n", ($8+$16+$24+$32+$40+$48+$56+$64+$72+$80)/10}' > power_avg
+               cat aux1 | awk -F, '{printf "%.4f\n", ($8+$16+$24+$32+$40+$48+$56+$64+$72+$76)/10}' > power_avg
+               
+               #As datamash just work per column, we need to make a transpose. Here we calculate a median and NOT the mean
+               cat aux1 | awk -F, '{printf "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", $8,$16,$24,$32,$40,$48,$56,$64,$72,$76}' > all_power
+               n_lines=$(wc -l all_power | awk '{print $1}')
+               cat all_power | tr "," "\t" | tr "." "," | datamash transpose | datamash median 1-$n_lines | datamash transpose | tr "," "." > power_median
 
                #remove all power and cycles
                cut -d, -f1,8,9,16,17,24,25,32,33,40,41,48,49,56,57,64,65,72,73,80 --complement aux1 > aux2
 
-               paste cycles_avg aux2 power_avg -d "," > consolidated-pmc-big.csv
+               paste cycles_avg aux2 power_median -d "," > consolidated-pmc-big.csv
        fi
 
-       rm -f aux* *_avg out
+
+       rm -f aux* *_avg out all_power
        cd ..
    done
           
@@ -413,6 +424,7 @@ create_dataset_performance_multitarget ()
              cat consolidated* | tr "," "\t" | tr "." "," | datamash mean 1-57 | tr "," "." | tr "\t" "," > aux
              mv aux consolidated-pmc-big.average; 
        fi
+       rm out
        cd ..
    done
 
