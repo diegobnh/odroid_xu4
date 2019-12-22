@@ -27,6 +27,12 @@ tics=`/usr/bin/printf "%.0f" $result` #Round to up or down
 count=0
 count=$(($count + 1)) 
 
+**Incremento**
+((i++))
+((++i))
+let "i++"
+let "++i"
+
 **Operações de impressão/remoção linhas**
 
 - remoção de todas as linhas superiores a um valor X
