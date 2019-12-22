@@ -66,7 +66,7 @@ check_energy_measurements(){
        DIFF=$(echo "$MAX_LINES $MIN_LINES" | awk '{print $1-$2}')
 
 
-       if [ $DIFF -gt 10 ] 
+       if [ $DIFF -gt 5 ] 
        then
            flag=1
            echo "You need to collect energy again to folder " $i ". But you just need to get again outliers files, not all"
