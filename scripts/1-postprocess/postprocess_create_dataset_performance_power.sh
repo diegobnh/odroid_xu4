@@ -53,6 +53,7 @@ restart_script ()
 #If exist, we need to collect again!
 check_energy_measurements(){   
 
+   flag=0
    FOLDERS=`ls -d */`
    for i in $FOLDERS ;
    do
@@ -64,19 +65,19 @@ check_energy_measurements(){
        MAX_LINES=$(wc -l *.energy | awk '{print $1}' | sed '$d' | datamash max 1) 
        DIFF=$(echo "$MAX_LINES $MIN_LINES" | awk '{print $1-$2}')
 
-       flag=0
+
        if [ $DIFF -gt 10 ] 
        then
            flag=1
            echo "You need to collect energy again to folder " $i ". But you just need to get again outliers files, not all"
        fi
-       
-       if [ $flag -eq 1 ]
-       then
-           exit 1
-       fi          
+                 
        cd ..;
    done
+   if [ $flag -eq 1 ]
+   then
+      exit 1
+   fi       
 }
 
 remove_lines_with_null_cycles_in_begin()
