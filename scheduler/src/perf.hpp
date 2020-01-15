@@ -1,14 +1,12 @@
 #pragma once
 #include <cstdint>
 
-//These number are specific to odroid_xu4
+
 #define START_INDEX_LITTLE 0
 #define END_INDEX_LITTLE 3
 #define START_INDEX_BIG 4
 #define END_INDEX_BIG 7
 
-#define PMCS_A7_ONLY 0
-#define PMCS_A15_ONLY 1
 
 /// Software hardware counters.
 struct PerfSoftwareData
@@ -31,8 +29,11 @@ struct PerfHardwareData
 };
 
 /// Initialises the performance counting subsystem.
-extern void perf_init();
+extern void perf_init_little();
+extern void perf_init_big();
+extern void perf_init_biglittle();
 
+extern void set_pmcs(unsigned int *, int);
 /// Shutdowns the performance counting subsystem.
 extern void perf_shutdown();
 
@@ -51,5 +52,4 @@ extern auto perf_consume_hw(int cpu) -> PerfHardwareData;
 /// A consume operation obtains counters as if they were reset during
 /// the previous consume operation.
 extern auto perf_consume_sw(int cpu) -> PerfSoftwareData;
-
 
